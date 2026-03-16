@@ -1,0 +1,11 @@
+{
+  "pages": [
+    "pages/index/index"
+  ],
+  "window": {
+    "navigationBarTitleText": "宝宝食物初体验",
+    "backgroundTextStyle": "light",
+    "backgroundColor": "#f6f5f3"
+  },
+  "style": "v2"
+} 

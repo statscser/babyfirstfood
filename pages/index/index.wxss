@@ -1,0 +1,300 @@
+/* =======================================================
+   index.wxss — PDF 视觉风格 · 莫兰迪色系
+   ======================================================= */
+
+/* ---------- 页面容器 ---------- */
+.page {
+  min-height: 100vh;
+  background-color: var(--bg-page);
+  padding-bottom: 60rpx;
+}
+
+/* =======================================================
+   顶部标题栏
+   ======================================================= */
+.header {
+  display: flex;
+  align-items: center;
+  padding: 32rpx 32rpx 20rpx;
+  background-color: var(--header-bg);
+  gap: 16rpx;
+}
+
+.header-sparkle {
+  font-size: 36rpx;
+  color: var(--header-pink);
+  line-height: 1;
+}
+
+.header-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.header-title {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 2rpx;
+}
+
+.header-sub {
+  font-size: 22rpx;
+  color: var(--text-en);
+  letter-spacing: 1rpx;
+  font-style: italic;
+}
+
+.header-badge {
+  display: flex;
+  align-items: baseline;
+  background-color: var(--header-pink);
+  border-radius: 40rpx;
+  padding: 8rpx 20rpx;
+  gap: 2rpx;
+}
+
+.header-badge-num {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.header-badge-total {
+  font-size: 22rpx;
+  color: var(--text-secondary);
+}
+
+/* =======================================================
+   搜索栏
+   ======================================================= */
+.search-wrap {
+  padding: 16rpx 24rpx 8rpx;
+  background-color: var(--header-bg);
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  background-color: #f0ebe8;
+  border-radius: 40rpx;
+  padding: 16rpx 24rpx;
+  gap: 12rpx;
+}
+
+.search-icon {
+  font-size: 28rpx;
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+
+.search-input {
+  flex: 1;
+  font-size: 28rpx;
+  color: var(--text-primary);
+  background: transparent;
+}
+
+.search-placeholder {
+  color: var(--text-en);
+  font-size: 28rpx;
+}
+
+.search-clear {
+  font-size: 24rpx;
+  color: var(--text-secondary);
+  padding: 4rpx 8rpx;
+  flex-shrink: 0;
+}
+
+/* =======================================================
+   分类 Tab 导航
+   ======================================================= */
+.tabs-scroll {
+  background-color: var(--header-bg);
+  padding-bottom: 16rpx;
+  white-space: nowrap;
+}
+
+.tabs-inner {
+  display: flex;
+  flex-direction: row;
+  padding: 12rpx 24rpx 0;
+  gap: 16rpx;
+}
+
+.tab-item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12rpx 28rpx;
+  border-radius: 40rpx;
+  border: 2rpx solid #e0d8d4;
+  background-color: var(--bg-card);
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.tab-label {
+  font-size: 26rpx;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* 激活态：背景色由 JS 通过 inline style 注入 */
+.tab-active .tab-label {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* =======================================================
+   食物数量提示条
+   ======================================================= */
+.count-bar {
+  padding: 16rpx 32rpx 8rpx;
+}
+
+.count-text {
+  font-size: 24rpx;
+  font-weight: 500;
+  letter-spacing: 1rpx;
+}
+
+/* =======================================================
+   食物网格
+   ======================================================= */
+.grid-wrap {
+  padding: 0 20rpx;
+}
+
+.food-grid {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 20rpx;
+}
+
+/* 每卡宽度：(100% - 左右padding*2 - 两个gap) / 3
+   外层 grid-wrap padding = 20rpx，gap = 20rpx
+   可用宽度 = 100% (grid-wrap内)
+   card = (100% - 40rpx) / 3                  */
+.food-card {
+  width: calc((100% - 40rpx) / 3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24rpx 12rpx 16rpx;
+  border-radius: var(--card-radius);
+  background-color: var(--bg-card);
+  box-shadow: var(--card-shadow);
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ---------- 卡片分类背景染色 ---------- */
+.card-bg-vegetables { background-color: var(--bg-vegetables); }
+.card-bg-fruits     { background-color: var(--bg-fruits);     }
+.card-bg-grains     { background-color: var(--bg-grains);     }
+.card-bg-meat       { background-color: var(--bg-meat);       }
+.card-bg-dairy      { background-color: var(--bg-dairy);      }
+.card-bg-legumes    { background-color: var(--bg-legumes);    }
+.card-bg-nuts       { background-color: var(--bg-nuts);       }
+.card-bg-spices     { background-color: var(--bg-spices);     }
+
+/* ---------- 卡片内容 ---------- */
+.food-emoji {
+  font-size: 56rpx;
+  line-height: 1;
+  margin-bottom: 12rpx;
+}
+
+.food-name {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: center;
+  line-height: 1.3;
+  margin-bottom: 6rpx;
+  /* 超长截断 */
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.food-en {
+  font-size: 20rpx;
+  color: var(--text-en);
+  text-align: center;
+  line-height: 1.3;
+  margin-bottom: 16rpx;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* =======================================================
+   进度圆点
+   ======================================================= */
+.dots-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.dot {
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: 50%;
+  background-color: var(--dot-empty);
+  flex-shrink: 0;
+}
+
+/* 未尝试 */
+.dot-empty {
+  background-color: var(--dot-empty);
+}
+
+/* 玫瑰红（过敏警示色） */
+.dot-rose {
+  background-color: var(--dot-rose);
+  box-shadow: 0 0 0 2rpx rgba(212, 144, 140, 0.25);
+}
+
+/* 琥珀黄（谨慎观察） */
+.dot-amber {
+  background-color: var(--dot-amber);
+  box-shadow: 0 0 0 2rpx rgba(212, 184, 120, 0.25);
+}
+
+/* 鼠尾草绿（排敏通过） */
+.dot-sage {
+  background-color: var(--dot-sage);
+  box-shadow: 0 0 0 2rpx rgba(138, 180, 138, 0.25);
+}
+
+/* =======================================================
+   空状态
+   ======================================================= */
+.empty-state {
+  width: 100%;
+  padding: 100rpx 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.empty-emoji {
+  font-size: 80rpx;
+}
+
+.empty-text {
+  font-size: 28rpx;
+  color: var(--text-secondary);
+}

@@ -1,0 +1,47 @@
+/* ===================================================
+   全局 CSS 变量 — Morandi 莫兰迪色系 + PDF 视觉风格
+   =================================================== */
+page {
+  /* ---- 分类主题色 ---- */
+  --color-primary:    #c4a8b0;
+  --color-vegetables: #8fab8f;
+  --color-fruits:     #d4908c;
+  --color-protein:    #c4a070;
+  --color-grains:     #c8aa84;
+  --color-dairy:      #9898c0;
+  --color-spices:     #7ab4a8;
+  --color-meat:       #c4a070;
+  --color-legumes:    #a0a878;
+  --color-nuts:       #b8a070;
+
+  /* ---- 卡片背景淡染色（极浅） ---- */
+  --bg-vegetables: #f2f7ed;
+  --bg-fruits:     #fef2f0;
+  --bg-grains:     #fdf6ec;
+  --bg-meat:       #faf4ec;
+  --bg-dairy:      #f2f2fa;
+  --bg-legumes:    #f4f5ea;
+  --bg-nuts:       #faf4e8;
+  --bg-spices:     #ecf7f4;
+
+  /* ---- 进度圆点色（莫兰迪） ---- */
+  --dot-empty: #dedad6;
+  --dot-rose:  #d4908c;   /* 第1次 / 过敏 */
+  --dot-amber: #d4b878;   /* 第2次 / 谨慎观察 */
+  --dot-sage:  #8ab48a;   /* 第3次 / 排敏通过 */
+
+  /* ---- 界面基础色 ---- */
+  --header-pink:    #f5c8c4;
+  --header-bg:      #fdf8f5;
+  --bg-page:        #f6f5f3;
+  --bg-card:        #ffffff;
+  --text-primary:   #3a3030;
+  --text-secondary: #9a8e8e;
+  --text-en:        #b8a8a8;
+  --card-radius:    20rpx;
+  --card-shadow:    0 2rpx 16rpx rgba(60, 40, 40, 0.07);
+
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+  font-family: -apple-system, "SF Pro Text", "PingFang SC", sans-serif;
+}

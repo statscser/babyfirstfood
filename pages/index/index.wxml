@@ -1,0 +1,102 @@
+<!-- index.wxml — Baby's First 100 Foods -->
+<view class="page">
+
+  <!-- ==================== 顶部标题栏 ==================== -->
+  <view class="header">
+    <view class="header-sparkle">🍼</view>
+    <view class="header-text">
+      <text class="header-title">宝宝食物初体验</text>
+      <text class="header-sub">Baby's First 100 Foods</text>
+    </view>
+    <view class="header-badge">
+      <text class="header-badge-num">{{triedCount}}</text>
+      <text class="header-badge-total">/{{totalCount}}</text>
+    </view>
+  </view>
+
+  <!-- ==================== 搜索栏 ==================== -->
+  <view class="search-wrap">
+    <view class="search-bar">
+      <text class="search-icon">🔍</text>
+      <input
+        class="search-input"
+        placeholder="搜索食物名称..."
+        placeholder-class="search-placeholder"
+        value="{{searchValue}}"
+        bindinput="onSearchInput"
+        confirm-type="search"
+      />
+      <text
+        wx:if="{{searchValue}}"
+        class="search-clear"
+        bindtap="onSearchClear"
+      >✕</text>
+    </view>
+  </view>
+
+  <!-- ==================== 分类 Tab 导航 ==================== -->
+  <scroll-view class="tabs-scroll" scroll-x enhanced show-scrollbar="{{false}}">
+    <view class="tabs-inner">
+      <view
+        wx:for="{{tabs}}"
+        wx:key="key"
+        class="tab-item {{activeTab === index ? 'tab-active' : ''}}"
+        style="{{activeTab === index ? 'background:' + themeColor + ';border-color:' + themeColor : ''}}"
+        bindtap="onTabChange"
+        data-idx="{{index}}"
+      >
+        <text class="tab-label">{{item.label}}</text>
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- ==================== 食物数量提示 ==================== -->
+  <view class="count-bar">
+    <text class="count-text" style="color:{{themeColor}}">
+      {{displayFoods.length}} 种食物清单
+    </text>
+  </view>
+
+  <!-- ==================== 食物网格 ==================== -->
+  <view class="grid-wrap">
+
+    <!-- 空状态 -->
+    <view wx:if="{{displayFoods.length === 0}}" class="empty-state">
+      <text class="empty-emoji">🌱</text>
+      <text class="empty-text">暂无匹配的食物</text>
+    </view>
+
+    <!-- 食物卡片网格 -->
+    <view class="food-grid">
+      <view
+        wx:for="{{displayFoods}}"
+        wx:key="id"
+        class="food-card card-bg-{{item.categoryKey}}"
+        bindtap="onFoodTap"
+        data-id="{{item.id}}"
+      >
+        <!-- Emoji -->
+        <text class="food-emoji">{{item.emoji}}</text>
+
+        <!-- 中文名 -->
+        <text class="food-name">{{item.name}}</text>
+
+        <!-- 英文名 -->
+        <text class="food-en">{{item.en}}</text>
+
+        <!-- 进度圆点 (3 dots) -->
+        <view class="dots-row">
+          <view
+            wx:for="{{item.dots}}"
+            wx:key="index"
+            wx:for-item="dot"
+            wx:for-index="di"
+            class="dot {{dot.cls}}"
+          ></view>
+        </view>
+      </view>
+    </view>
+
+  </view>
+
+</view>
