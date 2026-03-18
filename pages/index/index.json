@@ -1,5 +1,8 @@
 {
   "navigationBarTitleText": "宝宝食物初体验",
   "navigationBarBackgroundColor": "#fdf8f5",
-  "navigationBarTextStyle": "black"
+  "navigationBarTextStyle": "black",
+  "usingComponents": {
+    "food-detail": "/components/food-detail/food-detail"
+  }
 }

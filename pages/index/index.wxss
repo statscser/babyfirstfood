@@ -1,5 +1,5 @@
 /* =======================================================
-   index.wxss — 莫兰迪色系 + Overlay 翻转展开 + 记录交互
+   index.wxss — 莫兰迪色系 + Overlay 3D 翻转容器 + 食物网格
    ======================================================= */
 
 .page {
@@ -58,7 +58,7 @@
 .mask-show { display: block; }
 
 /* =======================================================
-   Overlay 包装器 — scale + flip
+   Overlay 3D 容器 — scale + flip（内容由 food-detail 组件提供）
    ======================================================= */
 .overlay-wrap {
   position: fixed;
@@ -69,7 +69,6 @@
   z-index: 200;
   border-radius: 32rpx;
   perspective: 1400rpx;
-  /* initial state: tiny + invisible */
   transform: scale(0.15);
   opacity: 0;
   pointer-events: none;
@@ -122,7 +121,7 @@
 }
 
 /* =======================================================
-   分类背景染色
+   食物网格卡片（正面，仅用于网格展示）
    ======================================================= */
 .card-bg-vegetables { background-color: var(--bg-vegetables); }
 .card-bg-fruits     { background-color: var(--bg-fruits);     }
@@ -133,9 +132,6 @@
 .card-bg-nuts       { background-color: var(--bg-nuts);       }
 .card-bg-spices     { background-color: var(--bg-spices);     }
 
-/* =======================================================
-   食物网格 & 正面卡片
-   ======================================================= */
 .grid-wrap { padding: 0 20rpx; }
 .food-grid { display: flex; flex-direction: row; flex-wrap: wrap; gap: 20rpx; }
 
@@ -161,218 +157,6 @@
 .dot-rose   { background-color: var(--dot-rose);  box-shadow: 0 0 0 2rpx rgba(212,144,140,.25); }
 .dot-amber  { background-color: var(--dot-amber); box-shadow: 0 0 0 2rpx rgba(212,184,120,.25); }
 .dot-sage   { background-color: var(--dot-sage);  box-shadow: 0 0 0 2rpx rgba(138,180,138,.25); }
-
-/* =======================================================
-   背面：标题区
-   ======================================================= */
-.back-header {
-  display: flex;
-  align-items: center;
-  padding: 28rpx 32rpx 24rpx;
-  gap: 18rpx;
-  flex-shrink: 0;
-  border-bottom: 1rpx solid rgba(0, 0, 0, 0.06);
-}
-.back-emoji { font-size: 64rpx; line-height: 1; flex-shrink: 0; }
-.back-title-group { flex: 1; display: flex; flex-direction: column; gap: 4rpx; }
-.back-name { font-size: 36rpx; font-weight: 700; color: var(--text-primary); }
-.back-en   { font-size: 24rpx; color: var(--text-en); font-style: italic; }
-.back-close {
-  width: 64rpx; height: 64rpx;
-  display: flex; align-items: center; justify-content: center;
-  border-radius: 50%;
-  background: rgba(0,0,0,0.07);
-  font-size: 28rpx; color: var(--text-secondary); flex-shrink: 0;
-}
-
-/* =======================================================
-   背面：主体区（可滚动）
-   ======================================================= */
-.back-body {
-  flex: 1;
-  padding: 24rpx 28rpx 16rpx;
-  display: flex;
-  flex-direction: column;
-  gap: 32rpx;
-  overflow-y: auto;
-}
-
-.back-section { display: flex; flex-direction: column; }
-
-.section-header { display: flex; align-items: baseline; gap: 12rpx; margin-bottom: 16rpx; }
-.section-title  { font-size: 26rpx; font-weight: 700; color: var(--text-secondary); letter-spacing: 1rpx; }
-.section-hint   { font-size: 22rpx; color: var(--text-en); }
-
-/* =======================================================
-   喂食记录槽
-   ======================================================= */
-.slots-wrap { display: flex; flex-direction: column; gap: 14rpx; }
-
-.slot {
-  display: flex;
-  align-items: center;
-  gap: 18rpx;
-  padding: 22rpx 24rpx;
-  border-radius: 20rpx;
-  transition: background 0.15s;
-  min-height: 88rpx;
-}
-
-/* 未记录：虚线边框提示可点击 */
-.slot-pending {
-  background: rgba(255,255,255,0.6);
-  border: 1.5rpx dashed rgba(0,0,0,0.18);
-}
-
-/* 已记录：实线边框，稍深背景 */
-.slot-done {
-  background: rgba(255,255,255,0.85);
-  border: 1.5rpx solid rgba(0,0,0,0.07);
-}
-
-/* 数字徽章 */
-.slot-badge {
-  width: 52rpx; height: 52rpx;
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 26rpx; font-weight: 700; color: #fff;
-  flex-shrink: 0;
-}
-.slot-badge-empty    { background: #c4bcb8; }
-.slot-badge-safe     { background: var(--dot-sage);  }
-.slot-badge-caution  { background: var(--dot-amber); }
-.slot-badge-allergic { background: var(--dot-rose);  }
-
-.slot-content { flex: 1; display: flex; flex-direction: column; gap: 6rpx; min-width: 0; }
-.slot-label   { font-size: 30rpx; font-weight: 600; color: var(--text-primary); }
-
-/* date row (shown after recording) */
-.slot-date-wrap { display: flex; align-items: center; gap: 8rpx; }
-.slot-date      { font-size: 26rpx; color: var(--text-secondary); }
-.slot-date-edit { font-size: 22rpx; color: var(--text-en); }
-
-.slot-meta      { font-size: 26rpx; color: var(--text-secondary); }
-.slot-meta-hint { color: var(--text-en); }
-
-/* "+" 提示图标（未记录时） */
-.slot-add { font-size: 36rpx; color: var(--text-en); flex-shrink: 0; width: 36rpx; text-align: center; }
-
-/* =======================================================
-   结果标签（已记录后右侧显示，点击展开选择器）
-   ======================================================= */
-.type-tag {
-  padding: 8rpx 20rpx;
-  border-radius: 24rpx;
-  font-size: 26rpx;
-  font-weight: 600;
-  flex-shrink: 0;
-}
-.type-tag-safe     { background: rgba(138, 180, 138, 0.18); color: #6a9a6a; }
-.type-tag-caution  { background: rgba(212, 184, 120, 0.22); color: #a88040; }
-.type-tag-allergic { background: rgba(212, 144, 140, 0.20); color: #b05050; }
-
-/* =======================================================
-   展开后的三选一选择器
-   ======================================================= */
-.type-options-row {
-  display: flex;
-  flex-direction: row;
-  gap: 10rpx;
-  flex-shrink: 0;
-}
-
-.type-opt {
-  padding: 10rpx 18rpx;
-  border-radius: 24rpx;
-  font-size: 26rpx;
-  font-weight: 600;
-  border: 1.5rpx solid transparent;
-  transition: all 0.12s;
-}
-
-/* unselected */
-.type-opt-safe     { color: #6a9a6a; border-color: rgba(138,180,138,0.45); background: rgba(138,180,138,0.08); }
-.type-opt-caution  { color: #a88040; border-color: rgba(212,184,120,0.45); background: rgba(212,184,120,0.10); }
-.type-opt-allergic { color: #b05050; border-color: rgba(212,144,140,0.45); background: rgba(212,144,140,0.08); }
-
-/* selected (active) */
-.type-opt-active-safe     { background: rgba(138,180,138,0.26); border-color: rgba(138,180,138,0.7); }
-.type-opt-active-caution  { background: rgba(212,184,120,0.32); border-color: rgba(212,184,120,0.75); }
-.type-opt-active-allergic { background: rgba(212,144,140,0.28); border-color: rgba(212,144,140,0.7); }
-
-/* =======================================================
-   喜好程度
-   ======================================================= */
-.like-scale { display: flex; flex-direction: row; gap: 10rpx; margin-top: 12rpx; }
-.like-btn {
-  flex: 1;
-  height: 96rpx;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 46rpx;
-  border-radius: 20rpx;
-  background: rgba(255,255,255,0.6);
-  border: 1.5rpx solid rgba(0,0,0,0.06);
-  transition: transform 0.12s, background 0.12s, border-color 0.12s;
-}
-.like-btn.like-active {
-  background: rgba(196, 168, 176, 0.22);
-  border-color: rgba(196, 168, 176, 0.6);
-  transform: scale(1.12);
-}
-
-/* =======================================================
-   备注输入
-   ======================================================= */
-.note-input {
-  width: 100%;
-  min-height: 100rpx;
-  background: rgba(255,255,255,0.7);
-  border: 1.5rpx solid rgba(0,0,0,0.07);
-  border-radius: 16rpx;
-  padding: 20rpx 22rpx;
-  font-size: 30rpx;
-  color: var(--text-primary);
-  box-sizing: border-box;
-  margin-top: 12rpx;
-}
-.note-placeholder { color: var(--text-en); font-size: 30rpx; }
-
-/* =======================================================
-   ===== DEV ONLY: debug 填充按钮 =====
-   ======================================================= */
-.debug-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 14rpx 0;
-  border-radius: 12rpx;
-  border: 2rpx dashed #c8c0bc;
-  background: transparent;
-}
-.debug-btn-text { font-size: 22rpx; color: #b0a8a4; letter-spacing: 1rpx; }
-/* ===== /DEV ONLY ===== */
-
-/* =======================================================
-   保存按钮（固定在 overlay-back 底部）
-   ======================================================= */
-.back-footer {
-  padding: 16rpx 28rpx 28rpx;
-  flex-shrink: 0;
-  border-top: 1rpx solid rgba(0,0,0,0.05);
-  background: #fffdf9;
-  border-radius: 0 0 32rpx 32rpx;
-}
-.save-btn {
-  width: 100%;
-  padding: 28rpx 0;
-  border-radius: 20rpx;
-  background: #b09098;
-  color: #fff;
-  font-size: 34rpx;
-  font-weight: 600;
-  text-align: center;
-  letter-spacing: 2rpx;
-}
 
 /* =======================================================
    空状态

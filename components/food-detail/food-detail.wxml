@@ -1,0 +1,183 @@
+<!-- food-detail.wxml -->
+<view wx:if="{{food && editingRecord}}" class="fd-root">
+
+  <!-- ── 标题区 ── -->
+  <view class="back-header card-bg-{{food.categoryKey}}">
+    <text class="back-emoji">{{food.emoji}}</text>
+    <view class="back-title-group">
+      <text class="back-name">{{food.name}}</text>
+      <text class="back-en">{{food.en}}</text>
+    </view>
+    <view class="back-close" catchtap="onCloseTap">✕</view>
+  </view>
+
+  <!-- ── 主体（可滚动） ── -->
+  <view class="back-body">
+
+    <!-- 喂食记录 -->
+    <view class="back-section">
+      <view class="section-header">
+        <text class="section-title">喂食记录</text>
+        <text class="section-hint">点击状态标签修改结果</text>
+      </view>
+      <view class="slots-wrap">
+
+        <!-- Slot 0 -->
+        <view
+          class="slot {{editingRecord.progressList[0].status ? 'slot-done' : 'slot-pending'}}"
+          catchtap="onRecordTap"
+          data-index="0"
+        >
+          <view class="slot-badge slot-badge-{{editingRecord.progressList[0].status ? editingRecord.progressList[0].type : 'empty'}}">1</view>
+          <view class="slot-content">
+            <text class="slot-label">第一次尝试</text>
+            <picker
+              wx:if="{{editingRecord.progressList[0].status}}"
+              mode="date"
+              value="{{editingRecord.progressList[0].date}}"
+              bindchange="onDateChange"
+              data-index="0"
+              catchtap="preventBubble"
+            >
+              <view class="slot-date-wrap">
+                <text class="slot-date">{{editingRecord.progressList[0].date}}</text>
+                <text class="slot-date-edit">✎</text>
+              </view>
+            </picker>
+            <text wx:else class="slot-meta slot-meta-hint">点击记录今天</text>
+          </view>
+          <block wx:if="{{editingRecord.progressList[0].status}}">
+            <view wx:if="{{expandedSlot === 0}}" class="type-options-row" catchtap="preventBubble">
+              <view class="type-opt {{editingRecord.progressList[0].type === 'safe' ? 'type-opt-active type-opt-active-safe' : 'type-opt-safe'}}" catchtap="onTypeSelect" data-index="0" data-type="safe">安全</view>
+              <view class="type-opt {{editingRecord.progressList[0].type === 'caution' ? 'type-opt-active type-opt-active-caution' : 'type-opt-caution'}}" catchtap="onTypeSelect" data-index="0" data-type="caution">观察</view>
+              <view class="type-opt {{editingRecord.progressList[0].type === 'allergic' ? 'type-opt-active type-opt-active-allergic' : 'type-opt-allergic'}}" catchtap="onTypeSelect" data-index="0" data-type="allergic">过敏</view>
+            </view>
+            <view wx:else class="type-tag type-tag-{{editingRecord.progressList[0].type}}" catchtap="onTypeExpand" data-index="0">
+              {{typeLabels[editingRecord.progressList[0].type]}} ▾
+            </view>
+          </block>
+          <text wx:else class="slot-add">+</text>
+        </view>
+
+        <!-- Slot 1 -->
+        <view
+          class="slot {{editingRecord.progressList[1].status ? 'slot-done' : 'slot-pending'}}"
+          catchtap="onRecordTap"
+          data-index="1"
+        >
+          <view class="slot-badge slot-badge-{{editingRecord.progressList[1].status ? editingRecord.progressList[1].type : 'empty'}}">2</view>
+          <view class="slot-content">
+            <text class="slot-label">第二次尝试</text>
+            <picker
+              wx:if="{{editingRecord.progressList[1].status}}"
+              mode="date"
+              value="{{editingRecord.progressList[1].date}}"
+              bindchange="onDateChange"
+              data-index="1"
+              catchtap="preventBubble"
+            >
+              <view class="slot-date-wrap">
+                <text class="slot-date">{{editingRecord.progressList[1].date}}</text>
+                <text class="slot-date-edit">✎</text>
+              </view>
+            </picker>
+            <text wx:else class="slot-meta slot-meta-hint">点击记录今天</text>
+          </view>
+          <block wx:if="{{editingRecord.progressList[1].status}}">
+            <view wx:if="{{expandedSlot === 1}}" class="type-options-row" catchtap="preventBubble">
+              <view class="type-opt {{editingRecord.progressList[1].type === 'safe' ? 'type-opt-active type-opt-active-safe' : 'type-opt-safe'}}" catchtap="onTypeSelect" data-index="1" data-type="safe">安全</view>
+              <view class="type-opt {{editingRecord.progressList[1].type === 'caution' ? 'type-opt-active type-opt-active-caution' : 'type-opt-caution'}}" catchtap="onTypeSelect" data-index="1" data-type="caution">观察</view>
+              <view class="type-opt {{editingRecord.progressList[1].type === 'allergic' ? 'type-opt-active type-opt-active-allergic' : 'type-opt-allergic'}}" catchtap="onTypeSelect" data-index="1" data-type="allergic">过敏</view>
+            </view>
+            <view wx:else class="type-tag type-tag-{{editingRecord.progressList[1].type}}" catchtap="onTypeExpand" data-index="1">
+              {{typeLabels[editingRecord.progressList[1].type]}} ▾
+            </view>
+          </block>
+          <text wx:else class="slot-add">+</text>
+        </view>
+
+        <!-- Slot 2 -->
+        <view
+          class="slot {{editingRecord.progressList[2].status ? 'slot-done' : 'slot-pending'}}"
+          catchtap="onRecordTap"
+          data-index="2"
+        >
+          <view class="slot-badge slot-badge-{{editingRecord.progressList[2].status ? editingRecord.progressList[2].type : 'empty'}}">3</view>
+          <view class="slot-content">
+            <text class="slot-label">第三次尝试</text>
+            <picker
+              wx:if="{{editingRecord.progressList[2].status}}"
+              mode="date"
+              value="{{editingRecord.progressList[2].date}}"
+              bindchange="onDateChange"
+              data-index="2"
+              catchtap="preventBubble"
+            >
+              <view class="slot-date-wrap">
+                <text class="slot-date">{{editingRecord.progressList[2].date}}</text>
+                <text class="slot-date-edit">✎</text>
+              </view>
+            </picker>
+            <text wx:else class="slot-meta slot-meta-hint">点击记录今天</text>
+          </view>
+          <block wx:if="{{editingRecord.progressList[2].status}}">
+            <view wx:if="{{expandedSlot === 2}}" class="type-options-row" catchtap="preventBubble">
+              <view class="type-opt {{editingRecord.progressList[2].type === 'safe' ? 'type-opt-active type-opt-active-safe' : 'type-opt-safe'}}" catchtap="onTypeSelect" data-index="2" data-type="safe">安全</view>
+              <view class="type-opt {{editingRecord.progressList[2].type === 'caution' ? 'type-opt-active type-opt-active-caution' : 'type-opt-caution'}}" catchtap="onTypeSelect" data-index="2" data-type="caution">观察</view>
+              <view class="type-opt {{editingRecord.progressList[2].type === 'allergic' ? 'type-opt-active type-opt-active-allergic' : 'type-opt-allergic'}}" catchtap="onTypeSelect" data-index="2" data-type="allergic">过敏</view>
+            </view>
+            <view wx:else class="type-tag type-tag-{{editingRecord.progressList[2].type}}" catchtap="onTypeExpand" data-index="2">
+              {{typeLabels[editingRecord.progressList[2].type]}} ▾
+            </view>
+          </block>
+          <text wx:else class="slot-add">+</text>
+        </view>
+
+      </view>
+    </view>
+
+    <!-- 喜好程度 -->
+    <view class="back-section">
+      <text class="section-title">喜好程度</text>
+      <view class="like-scale">
+        <view
+          wx:for="{{likeEmojis}}"
+          wx:key="index"
+          wx:for-item="le"
+          wx:for-index="li"
+          class="like-btn {{editingRecord.likeLevel === li + 1 ? 'like-active' : ''}}"
+          catchtap="onLikeSelect"
+          data-level="{{li + 1}}"
+        >{{le}}</view>
+      </view>
+    </view>
+
+    <!-- 备注 -->
+    <view class="back-section">
+      <text class="section-title">备注</text>
+      <textarea
+        class="note-input"
+        value="{{editingRecord.note}}"
+        placeholder="写下宝宝的反应和观察..."
+        placeholder-class="note-placeholder"
+        bindinput="onNoteInput"
+        auto-height
+        catchtap="preventBubble"
+      />
+    </view>
+
+    <!-- ===== DEV ONLY: debug fill ===== -->
+    <view class="debug-btn" catchtap="onDebugFill">
+      <text class="debug-btn-text">🐛 测试：随机填充排敏数据</text>
+    </view>
+    <!-- ===== /DEV ONLY ===== -->
+
+  </view>
+  <!-- /back-body -->
+
+  <!-- 保存按钮 -->
+  <view class="back-footer">
+    <view class="save-btn" catchtap="onSaveTap">保存记录</view>
+  </view>
+
+</view>
