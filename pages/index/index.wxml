@@ -26,15 +26,11 @@
         bindinput="onSearchInput"
         confirm-type="search"
       />
-      <text
-        wx:if="{{searchValue}}"
-        class="search-clear"
-        bindtap="onSearchClear"
-      >✕</text>
+      <text wx:if="{{searchValue}}" class="search-clear" bindtap="onSearchClear">✕</text>
     </view>
   </view>
 
-  <!-- ==================== 分类 Tab 导航 ==================== -->
+  <!-- ==================== 分类 Tab ==================== -->
   <scroll-view class="tabs-scroll" scroll-x enhanced show-scrollbar="{{false}}">
     <view class="tabs-inner">
       <view
@@ -50,40 +46,30 @@
     </view>
   </scroll-view>
 
-  <!-- ==================== 食物数量提示 ==================== -->
+  <!-- ==================== 数量提示 ==================== -->
   <view class="count-bar">
-    <text class="count-text" style="color:{{themeColor}}">
-      {{displayFoods.length}} 种食物清单
-    </text>
+    <text class="count-text" style="color:{{themeColor}}">{{displayFoods.length}} 种食物清单</text>
   </view>
 
-  <!-- ==================== 全屏遮罩 ==================== -->
-  <view
-    class="mask {{activeId ? 'mask-show' : ''}}"
-    bindtap="onMaskTap"
-  ></view>
+  <!-- ==================== 遮罩 ==================== -->
+  <view class="mask {{activeId ? 'mask-show' : ''}}" bindtap="onMaskTap"></view>
 
-  <!-- ==================== 详情覆盖卡（单例，悬浮于网格上方）==================== -->
-  <!--
-    架构说明：网格卡只负责正面展示。点击后渲染此独立 overlay。
-    overlay-wrap 通过 scale(0.15→1) + opacity 实现扩张；
-    overlay-inner 通过 rotateY(0→180deg) 实现翻转，两者同步触发。
-  -->
+  <!-- ==================== 详情 Overlay ==================== -->
   <view
-    wx:if="{{activeFood}}"
+    wx:if="{{activeFood && editingRecord}}"
     class="overlay-wrap {{activeId ? 'overlay-active' : ''}}"
     catchtap="preventBubble"
   >
     <view class="overlay-inner">
 
-      <!-- 正面（扩张过程中短暂可见） -->
+      <!-- 正面（过渡短暂可见） -->
       <view class="overlay-face overlay-front card-bg-{{activeFood.categoryKey}}">
         <text class="food-emoji large">{{activeFood.emoji}}</text>
         <text class="food-name">{{activeFood.name}}</text>
         <text class="food-en">{{activeFood.en}}</text>
       </view>
 
-      <!-- 背面（翻转后展示） -->
+      <!-- 背面 -->
       <view class="overlay-face overlay-back">
 
         <!-- 标题区 -->
@@ -96,45 +82,132 @@
           <view class="back-close" catchtap="onMaskTap">✕</view>
         </view>
 
-        <!-- 主体 -->
+        <!-- 主体（可滚动） -->
         <view class="back-body">
 
-          <!-- 三次喂食记录槽 -->
+          <!-- ── 喂食记录 ── -->
           <view class="back-section">
-            <text class="section-title">喂食记录</text>
+            <view class="section-header">
+              <text class="section-title">喂食记录</text>
+              <text class="section-hint">点击状态标签修改结果</text>
+            </view>
             <view class="slots-wrap">
 
-              <view class="slot">
-                <view class="slot-badge slot-badge-{{activeFood.slotResults[0]}}">1</view>
+              <!-- ── Slot 0 ── -->
+              <view
+                class="slot {{editingRecord.progressList[0].status ? 'slot-done' : 'slot-pending'}}"
+                catchtap="onRecordTap"
+                data-index="0"
+              >
+                <view class="slot-badge slot-badge-{{editingRecord.progressList[0].status ? editingRecord.progressList[0].type : 'empty'}}">1</view>
                 <view class="slot-content">
                   <text class="slot-label">第一次尝试</text>
-                  <text class="slot-date">尚未记录</text>
+                  <picker
+                    wx:if="{{editingRecord.progressList[0].status}}"
+                    mode="date"
+                    value="{{editingRecord.progressList[0].date}}"
+                    bindchange="onDateChange"
+                    data-index="0"
+                    catchtap="preventBubble"
+                  >
+                    <view class="slot-date-wrap">
+                      <text class="slot-date">{{editingRecord.progressList[0].date}}</text>
+                      <text class="slot-date-edit">✎</text>
+                    </view>
+                  </picker>
+                  <text wx:else class="slot-meta slot-meta-hint">点击记录今天</text>
                 </view>
-                <text class="slot-arrow">›</text>
+                <block wx:if="{{editingRecord.progressList[0].status}}">
+                  <view wx:if="{{expandedSlot === 0}}" class="type-options-row" catchtap="preventBubble">
+                    <view class="type-opt {{editingRecord.progressList[0].type === 'safe' ? 'type-opt-active type-opt-active-safe' : 'type-opt-safe'}}" catchtap="onTypeSelect" data-index="0" data-type="safe">安全</view>
+                    <view class="type-opt {{editingRecord.progressList[0].type === 'caution' ? 'type-opt-active type-opt-active-caution' : 'type-opt-caution'}}" catchtap="onTypeSelect" data-index="0" data-type="caution">观察</view>
+                    <view class="type-opt {{editingRecord.progressList[0].type === 'allergic' ? 'type-opt-active type-opt-active-allergic' : 'type-opt-allergic'}}" catchtap="onTypeSelect" data-index="0" data-type="allergic">过敏</view>
+                  </view>
+                  <view wx:else class="type-tag type-tag-{{editingRecord.progressList[0].type}}" catchtap="onTypeExpand" data-index="0">
+                    {{typeLabels[editingRecord.progressList[0].type]}} ▾
+                  </view>
+                </block>
+                <text wx:else class="slot-add">+</text>
               </view>
 
-              <view class="slot">
-                <view class="slot-badge slot-badge-{{activeFood.slotResults[1]}}">2</view>
+              <!-- ── Slot 1 ── -->
+              <view
+                class="slot {{editingRecord.progressList[1].status ? 'slot-done' : 'slot-pending'}}"
+                catchtap="onRecordTap"
+                data-index="1"
+              >
+                <view class="slot-badge slot-badge-{{editingRecord.progressList[1].status ? editingRecord.progressList[1].type : 'empty'}}">2</view>
                 <view class="slot-content">
                   <text class="slot-label">第二次尝试</text>
-                  <text class="slot-date">尚未记录</text>
+                  <picker
+                    wx:if="{{editingRecord.progressList[1].status}}"
+                    mode="date"
+                    value="{{editingRecord.progressList[1].date}}"
+                    bindchange="onDateChange"
+                    data-index="1"
+                    catchtap="preventBubble"
+                  >
+                    <view class="slot-date-wrap">
+                      <text class="slot-date">{{editingRecord.progressList[1].date}}</text>
+                      <text class="slot-date-edit">✎</text>
+                    </view>
+                  </picker>
+                  <text wx:else class="slot-meta slot-meta-hint">点击记录今天</text>
                 </view>
-                <text class="slot-arrow">›</text>
+                <block wx:if="{{editingRecord.progressList[1].status}}">
+                  <view wx:if="{{expandedSlot === 1}}" class="type-options-row" catchtap="preventBubble">
+                    <view class="type-opt {{editingRecord.progressList[1].type === 'safe' ? 'type-opt-active type-opt-active-safe' : 'type-opt-safe'}}" catchtap="onTypeSelect" data-index="1" data-type="safe">安全</view>
+                    <view class="type-opt {{editingRecord.progressList[1].type === 'caution' ? 'type-opt-active type-opt-active-caution' : 'type-opt-caution'}}" catchtap="onTypeSelect" data-index="1" data-type="caution">观察</view>
+                    <view class="type-opt {{editingRecord.progressList[1].type === 'allergic' ? 'type-opt-active type-opt-active-allergic' : 'type-opt-allergic'}}" catchtap="onTypeSelect" data-index="1" data-type="allergic">过敏</view>
+                  </view>
+                  <view wx:else class="type-tag type-tag-{{editingRecord.progressList[1].type}}" catchtap="onTypeExpand" data-index="1">
+                    {{typeLabels[editingRecord.progressList[1].type]}} ▾
+                  </view>
+                </block>
+                <text wx:else class="slot-add">+</text>
               </view>
 
-              <view class="slot">
-                <view class="slot-badge slot-badge-{{activeFood.slotResults[2]}}">3</view>
+              <!-- ── Slot 2 ── -->
+              <view
+                class="slot {{editingRecord.progressList[2].status ? 'slot-done' : 'slot-pending'}}"
+                catchtap="onRecordTap"
+                data-index="2"
+              >
+                <view class="slot-badge slot-badge-{{editingRecord.progressList[2].status ? editingRecord.progressList[2].type : 'empty'}}">3</view>
                 <view class="slot-content">
                   <text class="slot-label">第三次尝试</text>
-                  <text class="slot-date">尚未记录</text>
+                  <picker
+                    wx:if="{{editingRecord.progressList[2].status}}"
+                    mode="date"
+                    value="{{editingRecord.progressList[2].date}}"
+                    bindchange="onDateChange"
+                    data-index="2"
+                    catchtap="preventBubble"
+                  >
+                    <view class="slot-date-wrap">
+                      <text class="slot-date">{{editingRecord.progressList[2].date}}</text>
+                      <text class="slot-date-edit">✎</text>
+                    </view>
+                  </picker>
+                  <text wx:else class="slot-meta slot-meta-hint">点击记录今天</text>
                 </view>
-                <text class="slot-arrow">›</text>
+                <block wx:if="{{editingRecord.progressList[2].status}}">
+                  <view wx:if="{{expandedSlot === 2}}" class="type-options-row" catchtap="preventBubble">
+                    <view class="type-opt {{editingRecord.progressList[2].type === 'safe' ? 'type-opt-active type-opt-active-safe' : 'type-opt-safe'}}" catchtap="onTypeSelect" data-index="2" data-type="safe">安全</view>
+                    <view class="type-opt {{editingRecord.progressList[2].type === 'caution' ? 'type-opt-active type-opt-active-caution' : 'type-opt-caution'}}" catchtap="onTypeSelect" data-index="2" data-type="caution">观察</view>
+                    <view class="type-opt {{editingRecord.progressList[2].type === 'allergic' ? 'type-opt-active type-opt-active-allergic' : 'type-opt-allergic'}}" catchtap="onTypeSelect" data-index="2" data-type="allergic">过敏</view>
+                  </view>
+                  <view wx:else class="type-tag type-tag-{{editingRecord.progressList[2].type}}" catchtap="onTypeExpand" data-index="2">
+                    {{typeLabels[editingRecord.progressList[2].type]}} ▾
+                  </view>
+                </block>
+                <text wx:else class="slot-add">+</text>
               </view>
 
             </view>
           </view>
 
-          <!-- 喜好度 5 格 -->
+          <!-- ── 喜好程度 ── -->
           <view class="back-section">
             <text class="section-title">喜好程度</text>
             <view class="like-scale">
@@ -143,27 +216,40 @@
                 wx:key="index"
                 wx:for-item="le"
                 wx:for-index="li"
-                class="like-btn"
-                catchtap="onLikeTap"
+                class="like-btn {{editingRecord.likeLevel === li + 1 ? 'like-active' : ''}}"
+                catchtap="onLikeSelect"
                 data-level="{{li + 1}}"
               >{{le}}</view>
             </view>
           </view>
 
-          <!-- 文字备注 -->
+          <!-- ── 备注 ── -->
           <view class="back-section">
             <text class="section-title">备注</text>
             <textarea
               class="note-input"
+              value="{{editingRecord.note}}"
               placeholder="写下宝宝的反应和观察..."
               placeholder-class="note-placeholder"
+              bindinput="onNoteInput"
               auto-height
               catchtap="preventBubble"
             />
           </view>
 
+          <!-- ===== DEV ONLY: debug fill ===== -->
+          <view class="debug-btn" catchtap="onDebugFill">
+            <text class="debug-btn-text">🐛 测试：随机填充排敏数据</text>
+          </view>
+          <!-- ===== /DEV ONLY ===== -->
+
         </view>
         <!-- /back-body -->
+
+        <!-- 保存按钮（固定在底部） -->
+        <view class="back-footer">
+          <view class="save-btn" catchtap="onSaveTap">保存记录</view>
+        </view>
 
       </view>
       <!-- /overlay-back -->
@@ -175,14 +261,11 @@
 
   <!-- ==================== 食物网格 ==================== -->
   <view class="grid-wrap">
-
-    <!-- 空状态 -->
     <view wx:if="{{displayFoods.length === 0}}" class="empty-state">
       <text class="empty-emoji">🌱</text>
       <text class="empty-text">暂无匹配的食物</text>
     </view>
 
-    <!-- 食物卡片（正面展示，无翻转结构） -->
     <view class="food-grid">
       <view
         wx:for="{{displayFoods}}"
@@ -205,7 +288,6 @@
         </view>
       </view>
     </view>
-
   </view>
 
 </view>
