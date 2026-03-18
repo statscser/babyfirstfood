@@ -1,5 +1,5 @@
 /* =======================================================
-   index.wxss — PDF 视觉风格 · 莫兰迪色系
+   index.wxss — 莫兰迪色系 + Overlay 翻转展开卡片
    ======================================================= */
 
 /* ---------- 页面容器 ---------- */
@@ -20,11 +20,7 @@
   gap: 16rpx;
 }
 
-.header-sparkle {
-  font-size: 36rpx;
-  color: var(--header-pink);
-  line-height: 1;
-}
+.header-sparkle { font-size: 36rpx; line-height: 1; }
 
 .header-text {
   flex: 1;
@@ -56,16 +52,8 @@
   gap: 2rpx;
 }
 
-.header-badge-num {
-  font-size: 36rpx;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.header-badge-total {
-  font-size: 22rpx;
-  color: var(--text-secondary);
-}
+.header-badge-num  { font-size: 36rpx; font-weight: 700; color: var(--text-primary); }
+.header-badge-total { font-size: 22rpx; color: var(--text-secondary); }
 
 /* =======================================================
    搜索栏
@@ -84,33 +72,13 @@
   gap: 12rpx;
 }
 
-.search-icon {
-  font-size: 28rpx;
-  opacity: 0.6;
-  flex-shrink: 0;
-}
-
-.search-input {
-  flex: 1;
-  font-size: 28rpx;
-  color: var(--text-primary);
-  background: transparent;
-}
-
-.search-placeholder {
-  color: var(--text-en);
-  font-size: 28rpx;
-}
-
-.search-clear {
-  font-size: 24rpx;
-  color: var(--text-secondary);
-  padding: 4rpx 8rpx;
-  flex-shrink: 0;
-}
+.search-icon    { font-size: 28rpx; opacity: 0.6; flex-shrink: 0; }
+.search-input   { flex: 1; font-size: 28rpx; color: var(--text-primary); background: transparent; }
+.search-placeholder { color: var(--text-en); font-size: 28rpx; }
+.search-clear   { font-size: 24rpx; color: var(--text-secondary); padding: 4rpx 8rpx; flex-shrink: 0; }
 
 /* =======================================================
-   分类 Tab 导航
+   分类 Tab
    ======================================================= */
 .tabs-scroll {
   background-color: var(--header-bg);
@@ -137,64 +105,107 @@
   transition: all 0.2s;
 }
 
-.tab-label {
-  font-size: 26rpx;
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-
-/* 激活态：背景色由 JS 通过 inline style 注入 */
-.tab-active .tab-label {
-  color: #ffffff;
-  font-weight: 600;
-}
+.tab-label          { font-size: 26rpx; color: var(--text-secondary); font-weight: 500; }
+.tab-active .tab-label { color: #ffffff; font-weight: 600; }
 
 /* =======================================================
-   食物数量提示条
+   数量提示
    ======================================================= */
-.count-bar {
-  padding: 16rpx 32rpx 8rpx;
-}
-
-.count-text {
-  font-size: 24rpx;
-  font-weight: 500;
-  letter-spacing: 1rpx;
-}
+.count-bar   { padding: 16rpx 32rpx 8rpx; }
+.count-text  { font-size: 24rpx; font-weight: 500; letter-spacing: 1rpx; }
 
 /* =======================================================
-   食物网格
+   遮罩
    ======================================================= */
-.grid-wrap {
-  padding: 0 20rpx;
+.mask {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(30, 20, 20, 0.5);
+  z-index: 100;
+}
+.mask-show { display: block; }
+
+/* =======================================================
+   Overlay 包装器
+   扩张动画：scale(0.15) → scale(1) 同时 opacity 0→1
+   翻转动画：overlay-inner rotateY 0 → 180deg（略有延迟）
+   ======================================================= */
+.overlay-wrap {
+  position: fixed;
+  top: 4vh;
+  left: 5vw;
+  width: 90vw;
+  height: 90vh;
+  z-index: 200;
+  border-radius: 32rpx;
+  /* 起始：缩小 + 透明，模拟从网格卡飞出的效果 */
+  transform: scale(0.15);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform 0.46s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity   0.24s ease;
+  /* perspective 放在此层，card-inner 才能正确 preserve-3d */
+  perspective: 1400rpx;
 }
 
-.food-grid {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 20rpx;
+.overlay-wrap.overlay-active {
+  transform: scale(1);
+  opacity: 1;
+  pointer-events: auto;
 }
 
-/* 每卡宽度：(100% - 左右padding*2 - 两个gap) / 3
-   外层 grid-wrap padding = 20rpx，gap = 20rpx
-   可用宽度 = 100% (grid-wrap内)
-   card = (100% - 40rpx) / 3                  */
-.food-card {
-  width: calc((100% - 40rpx) / 3);
+/* 翻转体 */
+.overlay-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 32rpx;
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+  /* 翻转延迟 0.12s，让卡片先扩张一点再开始翻 */
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.12s;
+}
+
+.overlay-wrap.overlay-active .overlay-inner {
+  transform: rotateY(180deg);
+  -webkit-transform: rotateY(180deg);
+}
+
+/* 正背面公共基础 */
+.overlay-face {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  border-radius: 32rpx;
+  overflow: hidden;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* 正面 */
+.overlay-front {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 24rpx 12rpx 16rpx;
-  border-radius: var(--card-radius);
-  background-color: var(--bg-card);
-  box-shadow: var(--card-shadow);
-  box-sizing: border-box;
-  position: relative;
-  overflow: hidden;
+  justify-content: center;
+  gap: 12rpx;
 }
 
-/* ---------- 卡片分类背景染色 ---------- */
+/* 背面：初始旋转 180deg（隐藏），翻转后可见 */
+.overlay-back {
+  transform: rotateY(180deg);
+  -webkit-transform: rotateY(180deg);
+  background: #fffdf9;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24rpx 80rpx rgba(60, 40, 40, 0.22);
+}
+
+/* =======================================================
+   分类背景染色
+   ======================================================= */
 .card-bg-vegetables { background-color: var(--bg-vegetables); }
 .card-bg-fruits     { background-color: var(--bg-fruits);     }
 .card-bg-grains     { background-color: var(--bg-grains);     }
@@ -204,42 +215,57 @@
 .card-bg-nuts       { background-color: var(--bg-nuts);       }
 .card-bg-spices     { background-color: var(--bg-spices);     }
 
-/* ---------- 卡片内容 ---------- */
-.food-emoji {
-  font-size: 56rpx;
-  line-height: 1;
-  margin-bottom: 12rpx;
+/* =======================================================
+   食物网格 & 卡片（正面，无翻转结构）
+   ======================================================= */
+.grid-wrap { padding: 0 20rpx; }
+
+.food-grid {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 20rpx;
 }
+
+.food-card {
+  width: calc((100% - 40rpx) / 3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24rpx 12rpx 16rpx;
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  box-sizing: border-box;
+}
+
+/* --- 卡片正面内容 --- */
+.food-emoji       { font-size: 56rpx; line-height: 1; margin-bottom: 10rpx; }
+.food-emoji.large { font-size: 80rpx; }
 
 .food-name {
   font-size: 26rpx;
   font-weight: 600;
   color: var(--text-primary);
   text-align: center;
-  line-height: 1.3;
-  margin-bottom: 6rpx;
-  /* 超长截断 */
   width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  margin-bottom: 4rpx;
 }
 
 .food-en {
   font-size: 20rpx;
   color: var(--text-en);
   text-align: center;
-  line-height: 1.3;
-  margin-bottom: 16rpx;
   width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  margin-bottom: 14rpx;
 }
 
-/* =======================================================
-   进度圆点
-   ======================================================= */
+/* --- 进度圆点 --- */
 .dots-row {
   display: flex;
   flex-direction: row;
@@ -248,35 +274,165 @@
 }
 
 .dot {
-  width: 20rpx;
-  height: 20rpx;
+  width: 18rpx;
+  height: 18rpx;
   border-radius: 50%;
-  background-color: var(--dot-empty);
   flex-shrink: 0;
 }
 
-/* 未尝试 */
-.dot-empty {
-  background-color: var(--dot-empty);
+.dot-empty  { background-color: var(--dot-empty); }
+.dot-rose   { background-color: var(--dot-rose);  box-shadow: 0 0 0 2rpx rgba(212,144,140,.25); }
+.dot-amber  { background-color: var(--dot-amber); box-shadow: 0 0 0 2rpx rgba(212,184,120,.25); }
+.dot-sage   { background-color: var(--dot-sage);  box-shadow: 0 0 0 2rpx rgba(138,180,138,.25); }
+
+/* =======================================================
+   背面：标题区
+   ======================================================= */
+.back-header {
+  display: flex;
+  align-items: center;
+  padding: 28rpx 28rpx 22rpx;
+  gap: 18rpx;
+  flex-shrink: 0;
+  border-bottom: 1rpx solid rgba(0, 0, 0, 0.06);
 }
 
-/* 玫瑰红（过敏警示色） */
-.dot-rose {
-  background-color: var(--dot-rose);
-  box-shadow: 0 0 0 2rpx rgba(212, 144, 140, 0.25);
+.back-emoji { font-size: 64rpx; line-height: 1; flex-shrink: 0; }
+
+.back-title-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
 }
 
-/* 琥珀黄（谨慎观察） */
-.dot-amber {
-  background-color: var(--dot-amber);
-  box-shadow: 0 0 0 2rpx rgba(212, 184, 120, 0.25);
+.back-name { font-size: 36rpx; font-weight: 700; color: var(--text-primary); }
+.back-en   { font-size: 24rpx; color: var(--text-en); font-style: italic; }
+
+.back-close {
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.07);
+  font-size: 26rpx;
+  color: var(--text-secondary);
+  flex-shrink: 0;
 }
 
-/* 鼠尾草绿（排敏通过） */
-.dot-sage {
-  background-color: var(--dot-sage);
-  box-shadow: 0 0 0 2rpx rgba(138, 180, 138, 0.25);
+/* =======================================================
+   背面：主体区
+   ======================================================= */
+.back-body {
+  flex: 1;
+  padding: 24rpx 28rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 28rpx;
+  overflow: hidden;
 }
+
+.back-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.section-title {
+  font-size: 22rpx;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 2rpx;
+  margin-bottom: 14rpx;
+}
+
+/* =======================================================
+   喂食记录槽
+   ======================================================= */
+.slots-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+}
+
+.slot {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 16rpx 20rpx;
+  border-radius: 16rpx;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1rpx solid rgba(0, 0, 0, 0.05);
+}
+
+/* 数字徽章：颜色由实际记录结果决定，未记录时为中性灰 */
+.slot-badge {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22rpx;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.slot-badge-empty    { background: #c4bcb8; }                  /* 未记录：中性灰 */
+.slot-badge-safe     { background: var(--dot-sage);  }          /* 安全通过：鼠尾草绿 */
+.slot-badge-caution  { background: var(--dot-amber); }          /* 轻微反应：琥珀黄 */
+.slot-badge-allergic { background: var(--dot-rose);  }          /* 过敏反应：玫瑰红 */
+
+.slot-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.slot-label { font-size: 26rpx; font-weight: 600; color: var(--text-primary); }
+.slot-date  { font-size: 22rpx; color: var(--text-secondary); }
+.slot-arrow { font-size: 32rpx; color: var(--text-en); flex-shrink: 0; }
+
+/* =======================================================
+   喜好度
+   ======================================================= */
+.like-scale {
+  display: flex;
+  flex-direction: row;
+  gap: 10rpx;
+}
+
+.like-btn {
+  flex: 1;
+  height: 76rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+  border-radius: 16rpx;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1rpx solid rgba(0, 0, 0, 0.05);
+}
+
+/* =======================================================
+   文字备注
+   ======================================================= */
+.note-input {
+  width: 100%;
+  min-height: 88rpx;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1rpx solid rgba(0, 0, 0, 0.05);
+  border-radius: 16rpx;
+  padding: 18rpx 20rpx;
+  font-size: 26rpx;
+  color: var(--text-primary);
+  box-sizing: border-box;
+}
+
+.note-placeholder { color: var(--text-en); font-size: 26rpx; }
 
 /* =======================================================
    空状态
@@ -290,11 +446,5 @@
   gap: 20rpx;
 }
 
-.empty-emoji {
-  font-size: 80rpx;
-}
-
-.empty-text {
-  font-size: 28rpx;
-  color: var(--text-secondary);
-}
+.empty-emoji { font-size: 80rpx; }
+.empty-text  { font-size: 28rpx; color: var(--text-secondary); }

@@ -2,20 +2,18 @@ import { INITIAL_FOODS } from '../../data/initialFoods'
 
 const STORAGE_KEY = 'USER_RECORDS'
 
-// Tab 定义：label 是显示名，category 是数据中的分类字段值
 const TABS = [
-  { label: '全部', category: '',         key: 'primary'    },
-  { label: '蔬菜', category: '蔬菜',     key: 'vegetables' },
-  { label: '水果', category: '水果',     key: 'fruits'     },
-  { label: '谷物', category: '谷物',     key: 'grains'     },
-  { label: '肉类', category: '肉类',     key: 'meat'       },
-  { label: '蛋奶', category: '蛋奶',     key: 'dairy'      },
-  { label: '豆类', category: '豆类',     key: 'legumes'    },
-  { label: '坚果', category: '坚果',     key: 'nuts'       },
-  { label: '香料', category: '香料',     key: 'spices'     },
+  { label: '全部', category: '',     key: 'primary'    },
+  { label: '蔬菜', category: '蔬菜', key: 'vegetables' },
+  { label: '水果', category: '水果', key: 'fruits'     },
+  { label: '谷物', category: '谷物', key: 'grains'     },
+  { label: '肉类', category: '肉类', key: 'meat'       },
+  { label: '蛋奶', category: '蛋奶', key: 'dairy'      },
+  { label: '豆类', category: '豆类', key: 'legumes'    },
+  { label: '坚果', category: '坚果', key: 'nuts'       },
+  { label: '香料', category: '香料', key: 'spices'     },
 ]
 
-// 分类 key → CSS 变量中的 theme 色，用于动态 themeColor
 const THEME_COLORS = {
   primary:    '#c4a8b0',
   vegetables: '#8fab8f',
@@ -28,16 +26,15 @@ const THEME_COLORS = {
   spices:     '#7ab4a8',
 }
 
-// 分类 → CSS 类名 key
 const CATEGORY_KEYS = {
-  '蔬菜':     'vegetables',
-  '水果':     'fruits',
-  '谷物':     'grains',
-  '肉类':     'meat',
-  '蛋奶':     'dairy',
-  '豆类':     'legumes',
-  '坚果':     'nuts',
-  '香料':     'spices',
+  '蔬菜': 'vegetables',
+  '水果': 'fruits',
+  '谷物': 'grains',
+  '肉类': 'meat',
+  '蛋奶': 'dairy',
+  '豆类': 'legumes',
+  '坚果': 'nuts',
+  '香料': 'spices',
 }
 
 Page({
@@ -51,6 +48,10 @@ Page({
     displayFoods: [],
     totalCount: 0,
     triedCount: 0,
+    // overlay state
+    activeFood: null,   // the food object being shown (stays set during close animation)
+    activeId: null,     // drives overlay-active class (cleared first on close)
+    likeEmojis: ['😢', '😕', '😐', '😊', '😍'],
   },
 
   onLoad() {
@@ -61,7 +62,6 @@ Page({
     this._loadAndRender()
   },
 
-  // 从本地存储加载进度，合并后渲染
   _loadAndRender() {
     const records = wx.getStorageSync(STORAGE_KEY) || {}
     const allFoods = this._mergeData(records)
@@ -70,80 +70,96 @@ Page({
     this._filter()
   },
 
-  // 将 INITIAL_FOODS 作为底表，匹配用户进度
   _mergeData(records) {
-    return INITIAL_FOODS.map(function(food) {
+    return INITIAL_FOODS.map(food => {
       const r = records[food.id] || {}
-      const progress = r.progress || 0
       const progressList = r.progressList || []
-      // 3 个圆点：按位置固定颜色阶梯（rose→amber→sage）
-      const dotColors = ['rose', 'amber', 'sage']
-      const dots = [0, 1, 2].map(function(i) {
-        return { cls: progress > i ? 'dot-' + dotColors[i] : 'dot-empty' }
+      const progress = progressList.length
+
+      // Dots driven by per-attempt result ('safe'|'caution'|'allergic'), gray if not yet recorded
+      const resultToCls = { safe: 'dot-sage', caution: 'dot-amber', allergic: 'dot-rose' }
+      const dots = [0, 1, 2].map(i => {
+        const attempt = progressList[i]
+        return { cls: attempt ? (resultToCls[attempt.result] || 'dot-empty') : 'dot-empty' }
       })
+
+      // slotResults drives badge color in the detail overlay
+      const slotResults = [0, 1, 2].map(i => {
+        const attempt = progressList[i]
+        return attempt ? (attempt.result || 'empty') : 'empty'
+      })
+
       return Object.assign({}, food, {
-        progress: progress,
-        progressList: progressList,
+        progress,
+        progressList,
         likeLevel: r.likeLevel || 0,
         categoryKey: CATEGORY_KEYS[food.category] || 'primary',
-        dots: dots,
+        dots,
+        slotResults,
       })
     })
   },
 
-  // 根据当前 tab + 搜索词过滤
   _filter() {
-    const allFoods = this.data.allFoods
-    const activeTab = this.data.activeTab
-    const searchValue = this.data.searchValue
+    const { allFoods, activeTab, searchValue } = this.data
     const tab = TABS[activeTab]
-
     let list = allFoods
     if (tab.category) {
-      list = list.filter(function(f) { return f.category === tab.category })
+      list = list.filter(f => f.category === tab.category)
     }
-
     const q = searchValue.trim().toLowerCase()
     if (q) {
-      list = list.filter(function(f) {
-        return f.name.indexOf(q) !== -1 || f.en.toLowerCase().indexOf(q) !== -1
-      })
+      list = list.filter(f =>
+        f.name.indexOf(q) !== -1 || f.en.toLowerCase().indexOf(q) !== -1
+      )
     }
-
     this.setData({ displayFoods: list })
   },
 
   onSearchInput(e) {
-    const self = this
-    this.setData({ searchValue: e.detail.value }, function() {
-      self._filter()
-    })
+    this.setData({ searchValue: e.detail.value }, () => this._filter())
   },
 
   onSearchClear() {
-    const self = this
-    this.setData({ searchValue: '' }, function() {
-      self._filter()
-    })
+    this.setData({ searchValue: '' }, () => this._filter())
   },
 
   onTabChange(e) {
     const idx = Number(e.currentTarget.dataset.idx)
     const key = TABS[idx].key
-    const self = this
-    this.setData({
-      activeTab: idx,
-      themeKey: key,
-      themeColor: THEME_COLORS[key],
-    }, function() {
-      self._filter()
+    this.setData(
+      { activeTab: idx, themeKey: key, themeColor: THEME_COLORS[key] },
+      () => this._filter()
+    )
+  },
+
+  onCardTap(e) {
+    const id = Number(e.currentTarget.dataset.id)
+    if (this.data.activeId === id) return
+    const activeFood = this.data.allFoods.find(f => f.id === id) || null
+
+    // Step 1: render overlay at scale(0) with activeFood
+    this.setData({ activeFood }, () => {
+      // Step 2: next frame → add overlay-active to trigger scale + flip transitions
+      wx.nextTick(() => {
+        this.setData({ activeId: id })
+      })
     })
   },
 
-  onFoodTap(e) {
-    const id = e.currentTarget.dataset.id
-    // 预留：跳转详情页
-    // wx.navigateTo({ url: '/pages/detail/index?id=' + id })
-    console.log('food tapped:', id)
+  onMaskTap() {
+    // Step 1: remove active class → scale + flip reverse
+    this.setData({ activeId: null }, () => {
+      // Step 2: after animation completes, remove overlay from DOM
+      setTimeout(() => {
+        this.setData({ activeFood: null })
+      }, 480)
+    })
   },
+
+  onLikeTap(e) {
+    console.log('like level:', e.currentTarget.dataset.level)
+  },
+
+  preventBubble() {},
 })

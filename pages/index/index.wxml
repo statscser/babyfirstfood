@@ -57,6 +57,122 @@
     </text>
   </view>
 
+  <!-- ==================== 全屏遮罩 ==================== -->
+  <view
+    class="mask {{activeId ? 'mask-show' : ''}}"
+    bindtap="onMaskTap"
+  ></view>
+
+  <!-- ==================== 详情覆盖卡（单例，悬浮于网格上方）==================== -->
+  <!--
+    架构说明：网格卡只负责正面展示。点击后渲染此独立 overlay。
+    overlay-wrap 通过 scale(0.15→1) + opacity 实现扩张；
+    overlay-inner 通过 rotateY(0→180deg) 实现翻转，两者同步触发。
+  -->
+  <view
+    wx:if="{{activeFood}}"
+    class="overlay-wrap {{activeId ? 'overlay-active' : ''}}"
+    catchtap="preventBubble"
+  >
+    <view class="overlay-inner">
+
+      <!-- 正面（扩张过程中短暂可见） -->
+      <view class="overlay-face overlay-front card-bg-{{activeFood.categoryKey}}">
+        <text class="food-emoji large">{{activeFood.emoji}}</text>
+        <text class="food-name">{{activeFood.name}}</text>
+        <text class="food-en">{{activeFood.en}}</text>
+      </view>
+
+      <!-- 背面（翻转后展示） -->
+      <view class="overlay-face overlay-back">
+
+        <!-- 标题区 -->
+        <view class="back-header card-bg-{{activeFood.categoryKey}}">
+          <text class="back-emoji">{{activeFood.emoji}}</text>
+          <view class="back-title-group">
+            <text class="back-name">{{activeFood.name}}</text>
+            <text class="back-en">{{activeFood.en}}</text>
+          </view>
+          <view class="back-close" catchtap="onMaskTap">✕</view>
+        </view>
+
+        <!-- 主体 -->
+        <view class="back-body">
+
+          <!-- 三次喂食记录槽 -->
+          <view class="back-section">
+            <text class="section-title">喂食记录</text>
+            <view class="slots-wrap">
+
+              <view class="slot">
+                <view class="slot-badge slot-badge-{{activeFood.slotResults[0]}}">1</view>
+                <view class="slot-content">
+                  <text class="slot-label">第一次尝试</text>
+                  <text class="slot-date">尚未记录</text>
+                </view>
+                <text class="slot-arrow">›</text>
+              </view>
+
+              <view class="slot">
+                <view class="slot-badge slot-badge-{{activeFood.slotResults[1]}}">2</view>
+                <view class="slot-content">
+                  <text class="slot-label">第二次尝试</text>
+                  <text class="slot-date">尚未记录</text>
+                </view>
+                <text class="slot-arrow">›</text>
+              </view>
+
+              <view class="slot">
+                <view class="slot-badge slot-badge-{{activeFood.slotResults[2]}}">3</view>
+                <view class="slot-content">
+                  <text class="slot-label">第三次尝试</text>
+                  <text class="slot-date">尚未记录</text>
+                </view>
+                <text class="slot-arrow">›</text>
+              </view>
+
+            </view>
+          </view>
+
+          <!-- 喜好度 5 格 -->
+          <view class="back-section">
+            <text class="section-title">喜好程度</text>
+            <view class="like-scale">
+              <view
+                wx:for="{{likeEmojis}}"
+                wx:key="index"
+                wx:for-item="le"
+                wx:for-index="li"
+                class="like-btn"
+                catchtap="onLikeTap"
+                data-level="{{li + 1}}"
+              >{{le}}</view>
+            </view>
+          </view>
+
+          <!-- 文字备注 -->
+          <view class="back-section">
+            <text class="section-title">备注</text>
+            <textarea
+              class="note-input"
+              placeholder="写下宝宝的反应和观察..."
+              placeholder-class="note-placeholder"
+              auto-height
+              catchtap="preventBubble"
+            />
+          </view>
+
+        </view>
+        <!-- /back-body -->
+
+      </view>
+      <!-- /overlay-back -->
+
+    </view>
+    <!-- /overlay-inner -->
+  </view>
+  <!-- /overlay-wrap -->
+
   <!-- ==================== 食物网格 ==================== -->
   <view class="grid-wrap">
 
@@ -66,25 +182,18 @@
       <text class="empty-text">暂无匹配的食物</text>
     </view>
 
-    <!-- 食物卡片网格 -->
+    <!-- 食物卡片（正面展示，无翻转结构） -->
     <view class="food-grid">
       <view
         wx:for="{{displayFoods}}"
         wx:key="id"
         class="food-card card-bg-{{item.categoryKey}}"
-        bindtap="onFoodTap"
+        bindtap="onCardTap"
         data-id="{{item.id}}"
       >
-        <!-- Emoji -->
         <text class="food-emoji">{{item.emoji}}</text>
-
-        <!-- 中文名 -->
         <text class="food-name">{{item.name}}</text>
-
-        <!-- 英文名 -->
         <text class="food-en">{{item.en}}</text>
-
-        <!-- 进度圆点 (3 dots) -->
         <view class="dots-row">
           <view
             wx:for="{{item.dots}}"
