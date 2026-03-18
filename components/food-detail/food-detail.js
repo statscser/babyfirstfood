@@ -28,10 +28,11 @@ Component({
   },
 
   data: {
-    editingRecord: null,
-    expandedSlot:  null,
-    typeLabels:    { safe: '安全', caution: '观察', allergic: '过敏' },
-    likeEmojis:    ['🥺', '😕', '😐', '😊', '🥰'],
+    editingRecord:   null,
+    expandedSlot:    null,
+    pendingDateSlot: null,   // index of slot whose date needs fixing (drives highlight animation)
+    typeLabels:      { safe: '安全', caution: '观察', allergic: '过敏' },
+    likeEmojis:      ['🥺', '😕', '😐', '😊', '🥰'],
   },
 
   methods: {
@@ -59,12 +60,24 @@ Component({
       }
 
       if (!pl[index].status) {
+        const today = todayStr()
+        const prev  = index > 0 ? pl[index - 1] : null
         this.setData({
           [`editingRecord.progressList[${index}].status`]: 'recorded',
-          [`editingRecord.progressList[${index}].date`]:   todayStr(),
+          [`editingRecord.progressList[${index}].date`]:   today,
           [`editingRecord.progressList[${index}].type`]:   'safe',
           expandedSlot: null,
         })
+        // Warn if today doesn't satisfy the ordering rule; highlight the date field on dismiss
+        if (prev && prev.status && today <= prev.date) {
+          wx.showModal({
+            title: '请检查日期',
+            content: `今天（${today}）不晚于第 ${index} 次尝试（${prev.date}），请点击下方日期进行修改。`,
+            showCancel: false,
+            confirmText: '去修改',
+            success: () => this.setData({ pendingDateSlot: index }),
+          })
+        }
       } else {
         const cur = this.data.expandedSlot
         this.setData({ expandedSlot: cur === index ? null : index })
@@ -93,12 +106,24 @@ Component({
       const prev    = index > 0 ? pl[index - 1] : null
       const next    = index < 2 ? pl[index + 1] : null
 
+      if (newDate > todayStr()) {
+        wx.showModal({
+          title: '日期无效',
+          content: '尝试日期不能是未来日期，请重新选择。',
+          showCancel: false,
+          confirmText: '重新选择',
+          success: () => this.setData({ pendingDateSlot: index }),
+        })
+        return
+      }
+
       if (prev && prev.status && newDate <= prev.date) {
         wx.showModal({
           title: '日期顺序有误',
           content: `第 ${index + 1} 次尝试须晚于第 ${index} 次（${prev.date}），请重新选择。`,
           showCancel: false,
           confirmText: '重新选择',
+          success: () => this.setData({ pendingDateSlot: index }),
         })
         return
       }
@@ -108,10 +133,22 @@ Component({
           content: `第 ${index + 1} 次尝试须早于第 ${index + 2} 次（${next.date}），请重新选择。`,
           showCancel: false,
           confirmText: '重新选择',
+          success: () => this.setData({ pendingDateSlot: index }),
         })
         return
       }
-      this.setData({ [`editingRecord.progressList[${index}].date`]: newDate })
+      // Valid date — clear highlight and apply
+      this.setData({
+        [`editingRecord.progressList[${index}].date`]: newDate,
+        pendingDateSlot: null,
+      })
+    },
+
+    // Tapping the date picker area clears the pending highlight (bubbling already stopped by catchtap)
+    onDatePickerTap() {
+      if (this.data.pendingDateSlot !== null) {
+        this.setData({ pendingDateSlot: null })
+      }
     },
 
     onLikeSelect(e) {
@@ -125,10 +162,60 @@ Component({
     onSaveTap() {
       const { editingRecord } = this.data
       if (!editingRecord) return
+
+      // Validate all recorded dates before saving
+      const pl    = editingRecord.progressList
+      const today = todayStr()
+      for (let i = 0; i <= 2; i++) {
+        if (pl[i].status && pl[i].date > today) {
+          wx.showModal({
+            title: '日期无效',
+            content: `第 ${i + 1} 次尝试的日期不能是未来日期，请修改后再保存。`,
+            showCancel: false,
+            confirmText: '去修改',
+            success: () => this.setData({ pendingDateSlot: i }),
+          })
+          return
+        }
+      }
+      for (let i = 1; i <= 2; i++) {
+        if (pl[i].status && pl[i - 1].status && pl[i].date <= pl[i - 1].date) {
+          wx.showModal({
+            title: '日期顺序有误',
+            content: `第 ${i + 1} 次尝试须晚于第 ${i} 次（${pl[i - 1].date}），请修改后再保存。`,
+            showCancel: false,
+            confirmText: '去修改',
+            success: () => this.setData({ pendingDateSlot: i }),
+          })
+          return
+        }
+      }
+
       this.triggerEvent('save', {
         progressList: editingRecord.progressList,
         likeLevel:    editingRecord.likeLevel,
         note:         editingRecord.note,
+      })
+    },
+
+    onResetTap() {
+      wx.showModal({
+        title: '清除全部记录',
+        content: '将清除该食物的所有尝试记录、喜好评级和备注，无法恢复，确定继续？',
+        confirmText: '清除',
+        confirmColor: '#b05050',
+        cancelText: '取消',
+        success: (res) => {
+          if (!res.confirm) return
+          this.setData({
+            editingRecord: {
+              progressList: [0, 1, 2].map(() => ({ status: '', date: '', type: 'safe' })),
+              likeLevel: 0,
+              note: '',
+            },
+            expandedSlot: null,
+          })
+        },
       })
     },
 

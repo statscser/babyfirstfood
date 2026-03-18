@@ -37,9 +37,9 @@
               value="{{editingRecord.progressList[0].date}}"
               bindchange="onDateChange"
               data-index="0"
-              catchtap="preventBubble"
+              catchtap="onDatePickerTap"
             >
-              <view class="slot-date-wrap">
+              <view class="slot-date-wrap {{pendingDateSlot === 0 ? 'date-pending' : ''}}">
                 <text class="slot-date">{{editingRecord.progressList[0].date}}</text>
                 <text class="slot-date-edit">✎</text>
               </view>
@@ -74,9 +74,9 @@
               value="{{editingRecord.progressList[1].date}}"
               bindchange="onDateChange"
               data-index="1"
-              catchtap="preventBubble"
+              catchtap="onDatePickerTap"
             >
-              <view class="slot-date-wrap">
+              <view class="slot-date-wrap {{pendingDateSlot === 1 ? 'date-pending' : ''}}">
                 <text class="slot-date">{{editingRecord.progressList[1].date}}</text>
                 <text class="slot-date-edit">✎</text>
               </view>
@@ -111,9 +111,9 @@
               value="{{editingRecord.progressList[2].date}}"
               bindchange="onDateChange"
               data-index="2"
-              catchtap="preventBubble"
+              catchtap="onDatePickerTap"
             >
-              <view class="slot-date-wrap">
+              <view class="slot-date-wrap {{pendingDateSlot === 2 ? 'date-pending' : ''}}">
                 <text class="slot-date">{{editingRecord.progressList[2].date}}</text>
                 <text class="slot-date-edit">✎</text>
               </view>
@@ -175,8 +175,9 @@
   </view>
   <!-- /back-body -->
 
-  <!-- 保存按钮 -->
+  <!-- 底部操作区 -->
   <view class="back-footer">
+    <view class="reset-btn" catchtap="onResetTap">重置</view>
     <view class="save-btn" catchtap="onSaveTap">保存记录</view>
   </view>
 
