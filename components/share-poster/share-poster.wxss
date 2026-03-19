@@ -135,11 +135,6 @@
   background: rgba(0,0,0,0.05);
   color: var(--text-secondary);
 }
-.sp-btn-regen {
-  background: rgba(196,168,176,0.12);
-  color: #b09098;
-  border: 1.5rpx solid rgba(196,168,176,0.4);
-}
 .sp-btn-save {
   background: #b09098;
   color: #fff;

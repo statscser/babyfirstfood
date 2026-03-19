@@ -192,17 +192,6 @@ Page({
     sortOpen: false,
     // poster
     posterVisible: false,
-    // narrative summary
-    narrative: {
-      headline:       null,
-      summarySegs:    [],
-      funText:        '',
-      liked:          [],
-      disliked:       [],
-      allergyText:    null,
-      categoryCounts: {},
-      triedFoods:     [],   // [{ id, name, emoji, categoryKey }] sorted by id
-    },
   },
 
   onLoad() {
@@ -222,7 +211,6 @@ Page({
     const todayTasks = this._computeTodayTasks(allFoods)
     this.setData({ allFoods, totalCount: allFoods.length, triedCount, todayTasks })
     this._filter()
-    this.refreshNarrativeData(allFoods)
   },
 
   _computeTodayTasks(allFoods) {
@@ -245,101 +233,6 @@ Page({
         }
       })
       .sort((a, b) => priority(a) - priority(b))
-  },
-
-  // ─── narrative summary ────────────────────────────────
-
-  refreshNarrativeData(allFoods) {
-    const today = todayStr()
-
-    // ── 1. Collect per-food stats ─────────────────────────
-    const categoryCounts = {}
-    const liked      = []  // likeLevel === 5
-    const disliked   = []  // likeLevel === 1
-    const allergies  = []  // any slot with type === 'allergic'
-    const todayFoods = []  // foods that recorded an attempt today
-
-    allFoods.forEach(food => {
-      if (food.progress === 0) return
-
-      // category counts
-      categoryCounts[food.category] = (categoryCounts[food.category] || 0) + 1
-
-      // like levels
-      if (food.likeLevel === 5) liked.push(`${food.name}${food.emoji}`)
-      if (food.likeLevel === 1) disliked.push(`${food.name}${food.emoji}`)
-
-      // allergic: any recorded slot with type 'allergic'
-      if (food.progressList.some(p => p.status && p.type === 'allergic')) {
-        allergies.push(`【${food.name}】`)
-      }
-
-      // today's completed attempt: last filled slot matches today
-      if (food.progressList[food.progress - 1].date === today) {
-        todayFoods.push({ name: food.name, dayNum: food.progress })
-      }
-    })
-
-    // ── 2. Today's headline ───────────────────────────────
-    let headline = null
-    if (todayFoods.length === 1) {
-      headline = `🎉 今天宝宝完成了【${todayFoods[0].name}】的第 ${todayFoods[0].dayNum} 次排敏尝试，真棒！`
-    } else if (todayFoods.length > 1) {
-      headline = `🎉 今天宝宝完成了 ${todayFoods.length} 种食物的排敏尝试，超级棒！`
-    }
-
-    // ── 3. Colored summary segments ──────────────────────
-    // Only include categories that have at least one tried food
-    const catList = [
-      { label: '蔬菜', key: '蔬菜', color: THEME_COLORS.vegetables },
-      { label: '水果', key: '水果', color: THEME_COLORS.fruits     },
-      { label: '谷物', key: '谷物', color: THEME_COLORS.grains     },
-      { label: '肉类', key: '肉类', color: THEME_COLORS.meat       },
-      { label: '蛋奶', key: '蛋奶', color: THEME_COLORS.dairy      },
-      { label: '豆类', key: '豆类', color: THEME_COLORS.legumes    },
-      { label: '坚果', key: '坚果', color: THEME_COLORS.nuts       },
-      { label: '香料', key: '香料', color: THEME_COLORS.spices     },
-    ].filter(c => (categoryCounts[c.key] || 0) > 0)
-
-    const summarySegs = [{ text: '本宝宝已经勇敢尝试了 ', color: '#8a7870' }]
-    if (catList.length === 0) {
-      summarySegs.push({ text: '还没有记录呢，快来尝试第一口吧！', color: '#b0a8a4' })
-    } else {
-      catList.forEach((c, i) => {
-        summarySegs.push({ text: `${categoryCounts[c.key]} 种${c.label}`, color: c.color })
-        summarySegs.push({ text: i < catList.length - 1 ? '、' : '，', color: '#8a7870' })
-      })
-      summarySegs.push({ text: '离 100 种美食家又近了一步！', color: '#8a7870' })
-    }
-
-    // ── 4. Personalized fun text ─────────────────────────
-    let funText = '正在努力探索新美味中… 🌱'
-    if (liked.length > 0) {
-      funText = `宝宝是个 ${liked[0]} 狂魔 🥰`
-    }
-
-    // ── 5. Allergen notice ────────────────────────────────
-    const allergyText = allergies.length > 0
-      ? `宝宝对 ${allergies.join('、')} 可能有点敏感，我们需要继续观察哦 ⚠️`
-      : null
-
-    const triedFoods = allFoods
-      .filter(f => f.progress > 0)
-      .sort((a, b) => a.id - b.id)
-      .map(f => ({ id: f.id, name: f.name, emoji: f.emoji, categoryKey: f.categoryKey }))
-
-    this.setData({
-      narrative: {
-        headline,
-        summarySegs,
-        funText,
-        liked:          liked.slice(0, 2),
-        disliked:       disliked.slice(0, 2),
-        allergyText,
-        categoryCounts,
-        triedFoods,
-      },
-    })
   },
 
   _mergeData(records) {

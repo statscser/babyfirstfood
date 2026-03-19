@@ -43,7 +43,6 @@
     <view class="sp-actions">
       <view class="sp-btn sp-btn-cancel" bindtap="onClose">返回</view>
       <block wx:if="{{posterPath}}">
-        <view class="sp-btn sp-btn-regen"  bindtap="onRegenerate">重新生成</view>
         <view class="sp-btn sp-btn-save"   bindtap="onSave">保存到相册 ↓</view>
         <view class="sp-btn sp-btn-share"  bindtap="onShare">分享</view>
       </block>

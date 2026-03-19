@@ -27,7 +27,7 @@ function hexDarken(hex, amount) {
 Component({
   properties: {
     visible:    { type: Boolean, value: false },
-    narrative:  { type: Object,  value: null  },
+    allFoods:   { type: Array,   value: []    },
     triedCount: { type: Number,  value: 0     },
     totalCount: { type: Number,  value: 0     },
   },
@@ -61,11 +61,14 @@ Component({
       const name = e.detail.value
       this.setData({ babyName: name })
       wx.setStorageSync('BABY_NAME', name)
-    },
-
-    onRegenerate() {
-      this.setData({ posterPath: '' })
-      wx.nextTick(() => this._generate())
+      // Auto-regenerate after user stops typing (800ms debounce)
+      clearTimeout(this._nameTimer)
+      this._nameTimer = setTimeout(() => {
+        if (this.data.triedCount > 0) {
+          this.setData({ posterPath: '' })
+          this._generate()
+        }
+      }, 800)
     },
 
     onSave() {
@@ -83,8 +86,64 @@ Component({
       })
     },
 
+    _computeNarrative(allFoods) {
+      const categoryCounts = {}
+      const liked      = []
+      const disliked   = []
+      const allergies  = []
+
+      allFoods.forEach(food => {
+        if (food.progress === 0) return
+        categoryCounts[food.category] = (categoryCounts[food.category] || 0) + 1
+        if (food.likeLevel === 5) liked.push(`${food.name}${food.emoji}`)
+        if (food.likeLevel === 1) disliked.push(`${food.name}${food.emoji}`)
+        if (food.progressList.some(p => p.status && p.type === 'allergic')) {
+          allergies.push(`【${food.name}】`)
+        }
+      })
+
+      const catList = [
+        { label: '蔬菜', key: '蔬菜', color: THEME_COLORS.vegetables },
+        { label: '水果', key: '水果', color: THEME_COLORS.fruits     },
+        { label: '谷物', key: '谷物', color: THEME_COLORS.grains     },
+        { label: '肉类', key: '肉类', color: THEME_COLORS.meat       },
+        { label: '蛋奶', key: '蛋奶', color: THEME_COLORS.dairy      },
+        { label: '豆类', key: '豆类', color: THEME_COLORS.legumes    },
+        { label: '坚果', key: '坚果', color: THEME_COLORS.nuts       },
+        { label: '香料', key: '香料', color: THEME_COLORS.spices     },
+      ].filter(c => (categoryCounts[c.key] || 0) > 0)
+
+      const summarySegs = [{ text: '本宝宝已经勇敢尝试了 ', color: '#8a7870' }]
+      if (catList.length === 0) {
+        summarySegs.push({ text: '还没有记录呢，快来尝试第一口吧！', color: '#b0a8a4' })
+      } else {
+        catList.forEach((c, i) => {
+          summarySegs.push({ text: `${categoryCounts[c.key]} 种${c.label}`, color: c.color })
+          summarySegs.push({ text: i < catList.length - 1 ? '、' : '，', color: '#8a7870' })
+        })
+        summarySegs.push({ text: '离 100 种美食家又近了一步！', color: '#8a7870' })
+      }
+
+      const allergyText = allergies.length > 0
+        ? `宝宝对 ${allergies.join('、')} 可能有点敏感，我们需要继续观察哦 ⚠️`
+        : null
+
+      const triedFoods = allFoods
+        .filter(f => f.progress > 0)
+        .sort((a, b) => a.id - b.id)
+        .map(f => ({ id: f.id, name: f.name, emoji: f.emoji, categoryKey: f.categoryKey }))
+
+      return {
+        summarySegs,
+        liked:       liked.slice(0, 2),
+        disliked:    disliked.slice(0, 2),
+        allergyText,
+        triedFoods,
+      }
+    },
+
     _generate() {
-      if (!this.data.narrative) return
+      if (!this.data.allFoods || !this.data.allFoods.length) return
       this.setData({ loading: true })
       this._generatePoster()
         .then(path => this.setData({ posterPath: path, loading: false }))
@@ -96,7 +155,8 @@ Component({
 
     _generatePoster() {
       return new Promise((resolve, reject) => {
-        const { triedCount, totalCount, babyName, narrative } = this.data
+        const { triedCount, totalCount, babyName, allFoods } = this.data
+        const narrative  = this._computeNarrative(allFoods)
         const triedFoods = narrative.triedFoods
 
         this.createSelectorQuery()
@@ -113,8 +173,8 @@ Component({
             canvas.height = 1
             const ctx = canvas.getContext('2d')
 
-            const N_LINE_H = 38
-            ctx.font = '26px sans-serif'
+            const N_LINE_H = 46
+            ctx.font = '32px sans-serif'
             let nx = 0, nLines = 1
             narrative.summarySegs.forEach(seg => {
               const sw = ctx.measureText(seg.text).width
@@ -123,21 +183,21 @@ Component({
             })
             const narrativeH = nLines * N_LINE_H
 
-            const CARD_W = 162, CARD_H = 52, CARD_GAP = 8, COLS = 4
+            const CARD_W = 162, CARD_H = 64, CARD_GAP = 8, COLS = 4
             const gridLeft  = Math.floor((W - COLS * CARD_W - (COLS - 1) * CARD_GAP) / 2)
             const foodRows  = Math.ceil(triedFoods.length / COLS)
             const foodGridH = foodRows > 0 ? foodRows * (CARD_H + CARD_GAP) - CARD_GAP : 0
 
             // ── Phase 2: total canvas height ──────────────────────────
-            const HEADER_H  = 230
-            const INSIGHT_H = 3 * 42
-            const FOOTER_H  = 88
-            const H = HEADER_H + 28
-              + narrativeH + 20
-              + INSIGHT_H + 28
-              + 44
-              + foodGridH + 36
-              + FOOTER_H + 40
+            const HEADER_H  = 270
+            const INSIGHT_H = 3 * 50
+            const FOOTER_H  = 100
+            const H = HEADER_H + 32
+              + narrativeH + 24
+              + INSIGHT_H + 32
+              + 52
+              + foodGridH + 40
+              + FOOTER_H + 48
 
             canvas.height = H
 
@@ -174,28 +234,28 @@ Component({
 
             const titleText = babyName ? `${babyName} 的美食家养成之路` : '宝宝的美食家养成之路'
             ctx.fillStyle = 'rgba(255,255,255,0.95)'
-            ctx.font = 'bold 40px sans-serif'
+            ctx.font = 'bold 48px sans-serif'
             ctx.textAlign = 'center'
             ctx.textBaseline = 'top'
-            ctx.fillText(titleText, W / 2, 44)
+            ctx.fillText(titleText, W / 2, 46)
 
             ctx.fillStyle = 'rgba(255,255,255,0.68)'
-            ctx.font = '24px sans-serif'
-            ctx.fillText("Baby's First 100 Foods", W / 2, 100)
+            ctx.font = '30px sans-serif'
+            ctx.fillText("Baby's First 100 Foods", W / 2, 112)
 
-            ctx.font = 'bold 30px sans-serif'
+            ctx.font = 'bold 36px sans-serif'
             const badge  = `已探索 ${triedCount} / ${totalCount} 种食物`
-            const badgeW = ctx.measureText(badge).width + 56
+            const badgeW = ctx.measureText(badge).width + 64
             ctx.fillStyle = 'rgba(255,255,255,0.22)'
-            rr((W - badgeW) / 2, 144, badgeW, 50, 25)
+            rr((W - badgeW) / 2, 162, badgeW, 58, 29)
             ctx.fill()
             ctx.fillStyle = '#fff'
             ctx.textBaseline = 'middle'
-            ctx.fillText(badge, W / 2, 169)
+            ctx.fillText(badge, W / 2, 191)
 
             // ── 3. Narrative text (inline colored) ────────────────────
-            let y = HEADER_H + 28
-            ctx.font = '26px sans-serif'
+            let y = HEADER_H + 32
+            ctx.font = '32px sans-serif'
             ctx.textBaseline = 'top'
             let curX = SEC_PAD
             narrative.summarySegs.forEach(seg => {
@@ -222,23 +282,23 @@ Component({
               { icon: '🥺', label: '不太爱', val: disliked2     },
               { icon: '⚠️', label: '敏感',   val: allergyShort  },
             ]
-            ctx.font = '26px sans-serif'
+            ctx.font = '32px sans-serif'
             ctx.textBaseline = 'top'
             ctx.textAlign = 'left'
             insightLines.forEach(ins => {
               ctx.fillStyle = '#8a7870'
               ctx.fillText(`${ins.icon} ${ins.label}：${ins.val}`, SEC_PAD, y)
-              y += 42
+              y += 50
             })
             y += 20
 
             // ── 5. Food card grid ─────────────────────────────────────
             ctx.fillStyle = '#8a7870'
-            ctx.font = 'bold 26px sans-serif'
+            ctx.font = 'bold 32px sans-serif'
             ctx.textAlign = 'left'
             ctx.textBaseline = 'top'
             ctx.fillText(`已探索食物 · ${triedCount} 种`, SEC_PAD, y)
-            y += 44
+            y += 52
 
             triedFoods.forEach((food, i) => {
               const col   = i % COLS
@@ -251,13 +311,13 @@ Component({
               rr(cx, cy, CARD_W, CARD_H, 14)
               ctx.fill()
 
-              ctx.font = '26px sans-serif'
+              ctx.font = '30px sans-serif'
               ctx.textAlign = 'left'
               ctx.textBaseline = 'middle'
               ctx.fillStyle = hexDarken(color, 20)
               ctx.fillText(food.emoji, cx + 10, cy + CARD_H / 2)
 
-              ctx.font = '22px sans-serif'
+              ctx.font = '26px sans-serif'
               ctx.fillStyle = hexDarken(color, 45)
               ctx.fillText(food.name, cx + 46, cy + CARD_H / 2)
             })
@@ -271,8 +331,8 @@ Component({
             ctx.textBaseline = 'top'
             ctx.fillText('继续探索，每一口都是新发现 🌱', W / 2, y)
             ctx.fillStyle = '#d4c8c4'
-            ctx.font = '22px sans-serif'
-            ctx.fillText("宝宝食物初体验 · Baby's First 100 Foods", W / 2, y + 44)
+            ctx.font = '24px sans-serif'
+            ctx.fillText("🍼宝宝食物初体验 · Baby's First 100 Foods🍼", W / 2, y + 50)
 
             // ── Export ────────────────────────────────────────────────
             wx.canvasToTempFilePath({
