@@ -31,9 +31,9 @@
    ======================================================= */
 .search-wrap { padding: 16rpx 24rpx 8rpx; background-color: var(--header-bg); }
 .search-bar  { display: flex; align-items: center; background-color: #f0ebe8; border-radius: 40rpx; padding: 16rpx 24rpx; gap: 12rpx; }
-.search-icon  { font-size: 28rpx; opacity: 0.6; flex-shrink: 0; }
-.search-input { flex: 1; font-size: 28rpx; color: var(--text-primary); background: transparent; }
-.search-placeholder { color: var(--text-en); font-size: 28rpx; }
+.search-icon  { font-size: 30rpx; opacity: 0.6; flex-shrink: 0; }
+.search-input { flex: 1; font-size: 30rpx; color: var(--text-primary); background: transparent; }
+.search-placeholder { color: var(--text-en); font-size: 30rpx; }
 .search-clear { font-size: 24rpx; color: var(--text-secondary); padding: 4rpx 8rpx; flex-shrink: 0; }
 
 /* =======================================================
@@ -42,14 +42,55 @@
 .tabs-scroll  { background-color: var(--header-bg); padding-bottom: 16rpx; white-space: nowrap; }
 .tabs-inner   { display: flex; flex-direction: row; padding: 12rpx 24rpx 0; gap: 16rpx; }
 .tab-item     { display: inline-flex; align-items: center; justify-content: center; padding: 12rpx 28rpx; border-radius: 40rpx; border: 2rpx solid #e0d8d4; background-color: var(--bg-card); flex-shrink: 0; transition: all 0.2s; }
-.tab-label    { font-size: 26rpx; color: var(--text-secondary); font-weight: 500; }
+.tab-label    { font-size: 28rpx; color: var(--text-secondary); font-weight: 500; }
 .tab-active .tab-label { color: #ffffff; font-weight: 600; }
 
 /* =======================================================
-   数量提示
+   数量提示 + 排序
    ======================================================= */
-.count-bar  { padding: 16rpx 32rpx 8rpx; }
-.count-text { font-size: 24rpx; font-weight: 500; letter-spacing: 1rpx; }
+.count-bar  { padding: 16rpx 32rpx 8rpx; display: flex; align-items: center; justify-content: space-between; }
+.count-text { font-size: 26rpx; font-weight: 500; letter-spacing: 1rpx; }
+
+/* 排序自定义下拉 */
+.sort-mask {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 499;
+}
+.sort-wrap { position: relative; }
+.sort-picker {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 8rpx 18rpx;
+  border-radius: 30rpx;
+  border: 1.5rpx solid;
+  background: rgba(255,255,255,0.6);
+}
+.sort-picker-label { font-size: 24rpx; font-weight: 600; letter-spacing: 1rpx; }
+.sort-picker-arrow { font-size: 20rpx; }
+
+.sort-dropdown {
+  position: absolute;
+  top: calc(100% + 10rpx);
+  right: 0;
+  background: #fffdf9;
+  border-radius: 18rpx;
+  box-shadow: 0 8rpx 36rpx rgba(60,40,40,0.16);
+  z-index: 500;
+  overflow: hidden;
+  min-width: 180rpx;
+}
+.sort-option {
+  padding: 22rpx 32rpx;
+  font-size: 26rpx;
+  color: var(--text-primary);
+}
+.sort-option-active {
+  font-weight: 700;
+  background: rgba(196,168,176,0.1);
+}
 
 /* =======================================================
    遮罩
@@ -144,12 +185,22 @@
   border-radius: var(--card-radius);
   box-shadow: var(--card-shadow);
   box-sizing: border-box;
+  position: relative;
+}
+
+/* Like emoji badge — top-right corner */
+.card-like-emoji {
+  position: absolute;
+  top: 10rpx;
+  right: 12rpx;
+  font-size: 28rpx;
+  line-height: 1;
 }
 
 .food-emoji       { font-size: 56rpx; line-height: 1; margin-bottom: 10rpx; }
 .food-emoji.large { font-size: 80rpx; }
-.food-name  { font-size: 26rpx; font-weight: 600; color: var(--text-primary); text-align: center; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 4rpx; }
-.food-en    { font-size: 20rpx; color: var(--text-en); text-align: center; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 14rpx; }
+.food-name  { font-size: 30rpx; font-weight: 600; color: var(--text-primary); text-align: center; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 4rpx; }
+.food-en    { font-size: 22rpx; color: var(--text-en); text-align: center; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 14rpx; }
 
 .dots-row { display: flex; flex-direction: row; align-items: center; gap: 10rpx; }
 .dot       { width: 18rpx; height: 18rpx; border-radius: 50%; flex-shrink: 0; }

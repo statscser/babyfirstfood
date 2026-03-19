@@ -1,6 +1,7 @@
 import { INITIAL_FOODS } from '../../data/initialFoods'
 
 const STORAGE_KEY = 'USER_RECORDS'
+const LIKE_EMOJIS = ['🥺', '😕', '😐', '😊', '🥰']
 
 const TABS = [
   { label: '全部', category: '',     key: 'primary'    },
@@ -50,6 +51,16 @@ Page({
     // overlay state
     activeFood: null,
     activeId: null,
+    // sort
+    sortOptions: [
+      { label: '分类排序', mode: 'default'  },
+      { label: '拼音排序', mode: 'pinyin'   },
+      { label: '进度排序', mode: 'progress' },
+      { label: '喜好排序', mode: 'like'     },
+    ],
+    sortIndex: 0,
+    sortMode: 'default',
+    sortOpen: false,
   },
 
   onLoad() {
@@ -82,11 +93,13 @@ Page({
       const dots = progressList.map(p => ({
         cls: p.status ? (resultToCls[p.type] || 'dot-empty') : 'dot-empty',
       }))
+      const likeLevel = r.likeLevel || 0
       return Object.assign({}, food, {
         progress,
         progressList,
-        likeLevel:   r.likeLevel || 0,
-        note:        r.note      || '',
+        likeLevel,
+        likeEmoji:   likeLevel > 0 ? LIKE_EMOJIS[likeLevel - 1] : '',
+        note:        r.note || '',
         categoryKey: CATEGORY_KEYS[food.category] || 'primary',
         dots,
       })
@@ -104,7 +117,29 @@ Page({
         f.name.indexOf(q) !== -1 || f.en.toLowerCase().indexOf(q) !== -1
       )
     }
+    list = this._sortList(list)
     this.setData({ displayFoods: list })
+  },
+
+  _sortList(list) {
+    const mode = this.data.sortMode
+    if (mode === 'pinyin') {
+      return list.slice().sort((a, b) => a.name.localeCompare(b.name, 'zh'))
+    }
+    if (mode === 'progress') {
+      return list.slice().sort((a, b) => {
+        if (b.progress !== a.progress) return b.progress - a.progress
+        return b.likeLevel - a.likeLevel
+      })
+    }
+    if (mode === 'like') {
+      return list.slice().sort((a, b) => {
+        if (b.likeLevel !== a.likeLevel) return b.likeLevel - a.likeLevel
+        return b.progress - a.progress
+      })
+    }
+    // default: original initialFoods order (by id)
+    return list.slice().sort((a, b) => a.id - b.id)
   },
 
   // ─── navigation & search ─────────────────────────────────
@@ -115,6 +150,20 @@ Page({
 
   onSearchClear() {
     this.setData({ searchValue: '' }, () => this._filter())
+  },
+
+  onSortToggle() {
+    this.setData({ sortOpen: !this.data.sortOpen })
+  },
+
+  onSortClose() {
+    this.setData({ sortOpen: false })
+  },
+
+  onSortSelect(e) {
+    const idx  = Number(e.currentTarget.dataset.index)
+    const mode = this.data.sortOptions[idx].mode
+    this.setData({ sortIndex: idx, sortMode: mode, sortOpen: false }, () => this._filter())
   },
 
   onTabChange(e) {

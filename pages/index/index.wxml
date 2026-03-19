@@ -46,10 +46,29 @@
     </view>
   </scroll-view>
 
-  <!-- ==================== 数量提示 ==================== -->
+  <!-- ==================== 数量提示 + 排序 ==================== -->
   <view class="count-bar">
     <text class="count-text" style="color:{{themeColor}}">{{displayFoods.length}} 种食物清单</text>
+    <view class="sort-wrap">
+      <view class="sort-picker" style="border-color:{{themeColor}}" catchtap="onSortToggle">
+        <text class="sort-picker-label" style="color:{{themeColor}}">{{sortOptions[sortIndex].label}}</text>
+        <text class="sort-picker-arrow" style="color:{{themeColor}}">{{sortOpen ? '▴' : '▾'}}</text>
+      </view>
+      <view wx:if="{{sortOpen}}" class="sort-dropdown" catchtap="preventBubble">
+        <view
+          wx:for="{{sortOptions}}"
+          wx:key="mode"
+          class="sort-option {{sortIndex === index ? 'sort-option-active' : ''}}"
+          style="{{sortIndex === index ? 'color:' + themeColor : ''}}"
+          catchtap="onSortSelect"
+          data-index="{{index}}"
+        >{{item.label}}</view>
+      </view>
+    </view>
   </view>
+
+  <!-- ==================== 排序下拉关闭遮罩 ==================== -->
+  <view wx:if="{{sortOpen}}" class="sort-mask" bindtap="onSortClose"></view>
 
   <!-- ==================== 遮罩 ==================== -->
   <view class="mask {{activeId ? 'mask-show' : ''}}" bindtap="onMaskTap"></view>
@@ -101,6 +120,7 @@
         bindtap="onCardTap"
         data-id="{{item.id}}"
       >
+        <text wx:if="{{item.likeEmoji}}" class="card-like-emoji">{{item.likeEmoji}}</text>
         <text class="food-emoji">{{item.emoji}}</text>
         <text class="food-name">{{item.name}}</text>
         <text class="food-en">{{item.en}}</text>
