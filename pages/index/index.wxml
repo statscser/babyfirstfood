@@ -12,6 +12,9 @@
       <text class="header-badge-num">{{triedCount}}</text>
       <text class="header-badge-total">/{{totalCount}}</text>
     </view>
+    <view class="header-share" bindtap="onShareTap">
+      <text class="header-share-icon">📤</text>
+    </view>
   </view>
 
   <!-- ==================== 搜索栏 ==================== -->
@@ -164,5 +167,14 @@
       </view>
     </view>
   </view>
+
+  <!-- ==================== 分享海报组件 ==================== -->
+  <share-poster
+    visible="{{posterVisible}}"
+    narrative="{{narrative}}"
+    triedCount="{{triedCount}}"
+    totalCount="{{totalCount}}"
+    bind:close="onClosePoster"
+  />
 
 </view>

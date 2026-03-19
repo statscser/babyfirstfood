@@ -25,6 +25,8 @@
 .header-badge   { display: flex; align-items: baseline; background-color: var(--header-pink); border-radius: 40rpx; padding: 8rpx 20rpx; gap: 2rpx; }
 .header-badge-num   { font-size: 36rpx; font-weight: 700; color: var(--text-primary); }
 .header-badge-total { font-size: 22rpx; color: var(--text-secondary); }
+.header-share      { width: 64rpx; height: 64rpx; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(255,255,255,0.55); flex-shrink: 0; }
+.header-share-icon { font-size: 34rpx; line-height: 1; }
 
 /* =======================================================
    搜索栏
@@ -284,3 +286,4 @@
 .empty-state { width: 100%; padding: 100rpx 0; display: flex; flex-direction: column; align-items: center; gap: 20rpx; }
 .empty-emoji { font-size: 80rpx; }
 .empty-text  { font-size: 28rpx; color: var(--text-secondary); }
+

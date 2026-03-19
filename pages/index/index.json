@@ -3,6 +3,7 @@
   "navigationBarBackgroundColor": "#fdf8f5",
   "navigationBarTextStyle": "black",
   "usingComponents": {
-    "food-detail": "/components/food-detail/food-detail"
+    "food-detail":   "/components/food-detail/food-detail",
+    "share-poster":  "/components/share-poster/share-poster"
   }
 }

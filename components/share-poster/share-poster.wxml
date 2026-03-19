@@ -1,0 +1,56 @@
+<!-- components/share-poster/share-poster.wxml -->
+<view wx:if="{{visible}}" class="sp-overlay" catchtap="preventBubble">
+  <view class="sp-overlay-bg" bindtap="onClose"></view>
+  <view class="sp-panel">
+
+    <!-- 宝宝名字输入 -->
+    <view class="sp-name-row">
+      <text class="sp-name-label">宝宝名字</text>
+      <input
+        class="sp-name-input"
+        placeholder="输入名字让海报更有爱 ✨"
+        placeholder-class="sp-name-ph"
+        value="{{babyName}}"
+        bindinput="onBabyNameInput"
+        maxlength="8"
+      />
+    </view>
+
+    <!-- 海报内容区 -->
+    <scroll-view class="sp-body" scroll-y enhanced>
+
+      <!-- 生成中 -->
+      <view wx:if="{{loading}}" class="sp-loading">
+        <text class="sp-loading-icon">🎨</text>
+        <text class="sp-loading-text">海报生成中…</text>
+      </view>
+
+      <!-- 海报图片 -->
+      <view wx:elif="{{posterPath}}" class="sp-img-wrap">
+        <image class="sp-img" src="{{posterPath}}" mode="widthFix" show-menu-by-longpress="{{true}}" />
+        <text class="sp-hint">💡 长按图片也可直接保存或转发</text>
+      </view>
+
+      <!-- 无记录占位 -->
+      <view wx:elif="{{triedCount === 0}}" class="sp-placeholder">
+        <text class="sp-ph-emoji">🌱</text>
+        <text class="sp-ph-text">还没有探索记录，先去记录第一口吧！</text>
+      </view>
+
+    </scroll-view>
+
+    <!-- 操作按钮 -->
+    <view class="sp-actions">
+      <view class="sp-btn sp-btn-cancel" bindtap="onClose">返回</view>
+      <block wx:if="{{posterPath}}">
+        <view class="sp-btn sp-btn-regen"  bindtap="onRegenerate">重新生成</view>
+        <view class="sp-btn sp-btn-save"   bindtap="onSave">保存到相册 ↓</view>
+        <view class="sp-btn sp-btn-share"  bindtap="onShare">分享</view>
+      </block>
+    </view>
+
+  </view>
+</view>
+
+<!-- 离屏 Canvas（海报绘制用） -->
+<canvas type="2d" id="share-poster-canvas" class="sp-canvas-hidden"></canvas>
