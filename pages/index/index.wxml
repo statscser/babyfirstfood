@@ -32,7 +32,7 @@
 
   <!-- ==================== 今日待办 ==================== -->
   <view wx:if="{{todayTasks.length > 0}}" class="today-section">
-    <text class="today-section-title">今日待办 · {{todayTasks.length}}</text>
+    <text class="today-section-title">今日待办 : {{todayTasks.length}}</text>
     <scroll-view scroll-x class="today-scroll" show-scrollbar="{{false}}">
       <view class="today-cards-row">
         <view

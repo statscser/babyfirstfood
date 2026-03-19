@@ -46,8 +46,8 @@
   gap: 12rpx;
 }
 .today-section-title {
-  padding: 0 24rpx;
-  font-size: 24rpx;
+  padding: 0 36rpx;
+  font-size: 26rpx;
   font-weight: 600;
   color: var(--text-secondary);
   letter-spacing: 1rpx;
@@ -66,7 +66,7 @@
 .today-card {
   flex-shrink: 0;
   width: 520rpx;
-  padding: 24rpx 24rpx 24rpx 28rpx;
+  padding: 24rpx 12rpx 24rpx 24rpx;
   border-radius: 20rpx;
   border-left: 6rpx solid;
   background: var(--bg-card);
@@ -108,7 +108,7 @@
 /* =======================================================
    分类 Tab
    ======================================================= */
-.tabs-scroll  { background-color: var(--header-bg); padding-bottom: 16rpx; white-space: nowrap; }
+.tabs-scroll  { background-color: var(--header-bg); padding-top: 8rpx; padding-bottom: 16rpx; white-space: nowrap; }
 .tabs-inner   { display: flex; flex-direction: row; padding: 12rpx 24rpx 0; gap: 16rpx; }
 .tab-item     { display: inline-flex; align-items: center; justify-content: center; padding: 12rpx 28rpx; border-radius: 40rpx; border: 2rpx solid #e0d8d4; background-color: var(--bg-card); flex-shrink: 0; transition: all 0.2s; }
 .tab-label    { font-size: 28rpx; color: var(--text-secondary); font-weight: 500; }
