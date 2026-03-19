@@ -37,6 +37,75 @@
 .search-clear { font-size: 24rpx; color: var(--text-secondary); padding: 4rpx 8rpx; flex-shrink: 0; }
 
 /* =======================================================
+   今日待办列表
+   ======================================================= */
+.today-section {
+  margin: 16rpx 0 4rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+.today-section-title {
+  padding: 0 24rpx;
+  font-size: 24rpx;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 1rpx;
+}
+
+/* 横向滚动容器 */
+.today-scroll { padding: 4rpx 0 8rpx; }
+.today-cards-row {
+  display: flex;
+  flex-direction: row;
+  gap: 16rpx;
+  padding: 0 24rpx;
+  width: max-content;
+}
+
+.today-card {
+  flex-shrink: 0;
+  width: 520rpx;
+  padding: 24rpx 24rpx 24rpx 28rpx;
+  border-radius: 20rpx;
+  border-left: 6rpx solid;
+  background: var(--bg-card);
+  box-shadow: var(--card-shadow);
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  transition: opacity 0.12s;
+}
+.today-card:active { opacity: 0.75; }
+
+.today-card-active      { background: #fffdf9; }
+.today-card-done        { background: rgba(138,180,138,0.08); }
+.today-card-interrupted { background: rgba(212,144,140,0.08); }
+
+.today-emoji { font-size: 56rpx; line-height: 1; flex-shrink: 0; }
+
+.today-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+  min-width: 0;
+}
+.today-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+.today-title-warn { color: #b05050; }
+.today-title-done { color: #5a8a5a; }
+.today-sub {
+  font-size: 24rpx;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+/* =======================================================
    分类 Tab
    ======================================================= */
 .tabs-scroll  { background-color: var(--header-bg); padding-bottom: 16rpx; white-space: nowrap; }

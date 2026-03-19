@@ -30,6 +30,34 @@
     </view>
   </view>
 
+  <!-- ==================== 今日待办 ==================== -->
+  <view wx:if="{{todayTasks.length > 0}}" class="today-section">
+    <text class="today-section-title">今日待办 · {{todayTasks.length}}</text>
+    <scroll-view scroll-x class="today-scroll" show-scrollbar="{{false}}">
+      <view class="today-cards-row">
+        <view
+          wx:for="{{todayTasks}}"
+          wx:key="{{item.food.id}}"
+          class="today-card {{item.isInterrupted ? 'today-card-interrupted' : (item.isTodayDone ? 'today-card-done' : 'today-card-active')}}"
+          style="border-left-color:{{item.accentColor}}"
+          bindtap="onTodayTaskTap"
+          data-id="{{item.food.id}}"
+        >
+          <text class="today-emoji">{{item.food.emoji}}</text>
+          <view class="today-body">
+            <text wx:if="{{item.isInterrupted}}"  class="today-title today-title-warn">⚠️ {{item.food.name}} 排敏中断</text>
+            <text wx:elif="{{item.isTodayDone}}"  class="today-title today-title-done">✓ 今日 {{item.food.name}} 已完成</text>
+            <text wx:else                          class="today-title">今天是 {{item.food.name}} 排敏的第 {{item.dayNum}} 天</text>
+
+            <text wx:if="{{item.isInterrupted}}"  class="today-sub">上次记录：{{item.lastDate}}，建议重新开始 3 天流程</text>
+            <text wx:elif="{{item.isTodayDone}}"  class="today-sub">明天再来记录第 {{item.dayNum}} 天</text>
+            <text wx:else                          class="today-sub">点击开始今日记录 →</text>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
   <!-- ==================== 分类 Tab ==================== -->
   <scroll-view class="tabs-scroll" scroll-x enhanced show-scrollbar="{{false}}">
     <view class="tabs-inner">

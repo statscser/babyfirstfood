@@ -151,6 +151,19 @@ const CATEGORY_KEYS = {
   '香料': 'spices',
 }
 
+function todayStr() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+// Returns date string of the day after `dateStr` (YYYY-MM-DD)
+// Use new Date(y, m-1, d) — always parsed as local midnight, avoids UTC offset issues
+function nextDayStr(dateStr) {
+  const p = dateStr.split('-')
+  const d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]) + 1)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 Page({
   data: {
     tabs: TABS,
@@ -161,6 +174,8 @@ Page({
     displayFoods: [],
     totalCount: 0,
     triedCount: 0,
+    // today task banner
+    todayTasks: [],
     // overlay state
     activeFood: null,
     activeId: null,
@@ -190,8 +205,31 @@ Page({
     const records = wx.getStorageSync(STORAGE_KEY) || {}
     const allFoods = this._mergeData(records)
     const triedCount = allFoods.filter(f => f.progress > 0).length
-    this.setData({ allFoods, totalCount: allFoods.length, triedCount })
+    const todayTasks = this._computeTodayTasks(allFoods)
+    this.setData({ allFoods, totalCount: allFoods.length, triedCount, todayTasks })
     this._filter()
+  },
+
+  _computeTodayTasks(allFoods) {
+    const today = todayStr()
+    const priority = t => t.isTodayDone ? 2 : t.isInterrupted ? 1 : 0
+    return allFoods
+      .filter(f => f.progress === 1 || f.progress === 2)
+      .map(food => {
+        const lastDate      = food.progressList[food.progress - 1].date
+        const dayNum        = food.progress + 1
+        const isTodayDone   = today === lastDate
+        const isInterrupted = !isTodayDone && today !== nextDayStr(lastDate)
+        return {
+          food,
+          accentColor:   THEME_COLORS[food.categoryKey] || THEME_COLORS.primary,
+          isTodayDone,
+          isInterrupted,
+          dayNum,
+          lastDate,
+        }
+      })
+      .sort((a, b) => priority(a) - priority(b))
   },
 
   _mergeData(records) {
@@ -290,6 +328,15 @@ Page({
       { activeTab: idx, themeColor: THEME_COLORS[key] },
       () => this._filter()
     )
+  },
+
+  onTodayTaskTap(e) {
+    const id = Number(e.currentTarget.dataset.id)
+    const activeFood = this.data.allFoods.find(f => f.id === id) || null
+    if (!activeFood) return
+    this.setData({ activeFood }, () => {
+      wx.nextTick(() => this.setData({ activeId: id }))
+    })
   },
 
   // ─── overlay open / close ─────────────────────────────────
