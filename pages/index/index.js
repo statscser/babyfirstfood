@@ -3,6 +3,119 @@ import { INITIAL_FOODS } from '../../data/initialFoods'
 const STORAGE_KEY = 'USER_RECORDS'
 const LIKE_EMOJIS = ['🥺', '😕', '😐', '😊', '🥰']
 
+// 手动标注拼音（无声调、无空格拼接），确保跨平台排序一致
+// 排序依据：逐字母比较，与标准字典序完全一致
+const FOOD_PINYIN = {
+  // 蔬菜
+  1:  'hongshu',       // 红薯
+  2:  'huluobo',       // 胡萝卜
+  3:  'xilanhua',      // 西蓝花
+  4:  'nangua',        // 南瓜
+  5:  'huacai',        // 花菜
+  6:  'tudou',         // 土豆
+  7:  'wandou',        // 豌豆
+  8:  'sijidou',       // 四季豆
+  9:  'bocai',         // 菠菜
+  10: 'xihulu',        // 西葫芦
+  11: 'yumi',          // 玉米
+  12: 'huanggua',      // 黄瓜
+  13: 'tianjiao',      // 甜椒
+  14: 'xihongshi',     // 西红柿
+  15: 'mogu',          // 蘑菇
+  16: 'shanyao',       // 山药
+  17: 'yutou',         // 芋头
+  18: 'lusun',         // 芦笋
+  19: 'qingcai',       // 青菜
+  20: 'qincai',        // 芹菜
+  21: 'yuyiganlan',    // 羽衣甘蓝
+  22: 'yangcong',      // 洋葱
+  23: 'qiezi',         // 茄子
+  24: 'tiancai',       // 甜菜
+  25: 'donggua',       // 冬瓜
+  // 水果
+  26: 'caomei',        // 草莓
+  27: 'pingguo',       // 苹果
+  28: 'xiangjiao',     // 香蕉
+  29: 'li',            // 梨
+  30: 'lanmei',        // 蓝莓
+  31: 'fupenzi',       // 覆盆子
+  32: 'heimei',        // 黑莓
+  33: 'niuyouguo',     // 牛油果
+  34: 'taozi',         // 桃子
+  35: 'mihoutao',      // 猕猴桃
+  36: 'mugua',         // 木瓜
+  37: 'chengzi',       // 橙子
+  38: 'juzi',          // 橘子
+  39: 'ningmeng',      // 柠檬
+  40: 'ximei',         // 西梅
+  41: 'mangguo',       // 芒果
+  42: 'boluo',         // 菠萝
+  43: 'putao',         // 葡萄
+  44: 'xigua',         // 西瓜
+  45: 'yingtao',       // 樱桃
+  46: 'hamigua',       // 哈密瓜
+  47: 'xianggua',      // 香瓜
+  48: 'huolongguo',    // 火龙果
+  // 谷物
+  49: 'mifan',         // 米饭
+  50: 'yanmai',        // 燕麦
+  51: 'mianbao',       // 面包
+  52: 'yidalimian',    // 意大利面
+  53: 'xiaomi',        // 小米
+  54: 'limai',         // 藜麦
+  55: 'yumibing',      // 玉米饼
+  56: 'damai',         // 大麦
+  57: 'zimi',          // 紫米
+  58: 'xiaomai',       // 小麦
+  // 肉类
+  59: 'jirou',         // 鸡肉
+  60: 'niurou',        // 牛肉
+  61: 'zhurou',        // 猪肉
+  62: 'zhugan',        // 猪肝
+  63: 'yarou',         // 鸭肉
+  64: 'yangrou',       // 羊肉
+  65: 'huojirou',      // 火鸡肉
+  66: 'yeniurou',      // 野牛肉
+  67: 'sanwenyu',      // 三文鱼
+  68: 'xueyu',         // 鳕鱼
+  69: 'longliyu',      // 龙利鱼
+  70: 'xia',           // 虾
+  71: 'yinyu',         // 银鱼
+  72: 'beilei',        // 贝类
+  // 蛋奶
+  73: 'jidan',         // 鸡蛋
+  74: 'niunai',        // 牛奶
+  75: 'suannai',       // 酸奶
+  76: 'huangyou',      // 黄油
+  77: 'qiedanailao',   // 切达奶酪
+  78: 'maowunailao',   // 茅屋奶酪
+  79: 'naiyounailao',  // 奶油奶酪
+  80: 'masulila',      // 马苏里拉
+  81: 'pamasen',       // 帕玛森
+  82: 'ruqingnailao',  // 乳清奶酪
+  // 豆类
+  83: 'yingzuidou',    // 鹰嘴豆
+  84: 'heidou',        // 黑豆
+  85: 'hongdou',       // 红豆
+  86: 'lvdou',         // 绿豆 (lü → lv)
+  87: 'dadou',         // 大豆
+  88: 'doufu',         // 豆腐
+  // 坚果
+  89: 'huasheng',      // 花生
+  90: 'hetao',         // 核桃
+  91: 'xingren',       // 杏仁
+  92: 'yaoguo',        // 腰果
+  93: 'shujianguo',    // 树坚果
+  94: 'zhima',         // 芝麻
+  // 香料
+  95: 'suan',          // 蒜
+  96: 'jiang',         // 姜
+  97: 'rougui',        // 肉桂
+  98: 'jiucengta',     // 九层塔
+  99: 'bohe',          // 薄荷
+  100: 'ouqin',        // 欧芹
+}
+
 const TABS = [
   { label: '全部', category: '',     key: 'primary'    },
   { label: '蔬菜', category: '蔬菜', key: 'vegetables' },
@@ -124,7 +237,11 @@ Page({
   _sortList(list) {
     const mode = this.data.sortMode
     if (mode === 'pinyin') {
-      return list.slice().sort((a, b) => a.name.localeCompare(b.name, 'zh'))
+      return list.slice().sort((a, b) => {
+        const pa = FOOD_PINYIN[a.id] || ''
+        const pb = FOOD_PINYIN[b.id] || ''
+        return pa < pb ? -1 : pa > pb ? 1 : 0
+      })
     }
     if (mode === 'progress') {
       return list.slice().sort((a, b) => {
