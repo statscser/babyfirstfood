@@ -7,5 +7,6 @@
     "backgroundTextStyle": "light",
     "backgroundColor": "#f6f5f3"
   },
-  "style": "v2"
+  "style": "v2",
+  "lazyCodeLoading": "requiredComponents"
 } 
