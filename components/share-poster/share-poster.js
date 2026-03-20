@@ -86,62 +86,6 @@ Component({
       })
     },
 
-    _computeNarrative(allFoods) {
-      const categoryCounts = {}
-      const liked      = []
-      const disliked   = []
-      const allergies  = []
-
-      allFoods.forEach(food => {
-        if (food.progress === 0) return
-        categoryCounts[food.category] = (categoryCounts[food.category] || 0) + 1
-        if (food.likeLevel === 5) liked.push(`${food.name}${food.emoji}`)
-        if (food.likeLevel === 1) disliked.push(`${food.name}${food.emoji}`)
-        if (food.progressList.some(p => p.status && p.type === 'allergic')) {
-          allergies.push(`【${food.name}】`)
-        }
-      })
-
-      const catList = [
-        { label: '蔬菜', key: '蔬菜', color: THEME_COLORS.vegetables },
-        { label: '水果', key: '水果', color: THEME_COLORS.fruits     },
-        { label: '谷物', key: '谷物', color: THEME_COLORS.grains     },
-        { label: '肉类', key: '肉类', color: THEME_COLORS.meat       },
-        { label: '蛋奶', key: '蛋奶', color: THEME_COLORS.dairy      },
-        { label: '豆类', key: '豆类', color: THEME_COLORS.legumes    },
-        { label: '坚果', key: '坚果', color: THEME_COLORS.nuts       },
-        { label: '香料', key: '香料', color: THEME_COLORS.spices     },
-      ].filter(c => (categoryCounts[c.key] || 0) > 0)
-
-      const summarySegs = [{ text: '本宝宝已经勇敢尝试了 ', color: '#8a7870' }]
-      if (catList.length === 0) {
-        summarySegs.push({ text: '还没有记录呢，快来尝试第一口吧！', color: '#b0a8a4' })
-      } else {
-        catList.forEach((c, i) => {
-          summarySegs.push({ text: `${categoryCounts[c.key]} 种${c.label}`, color: c.color })
-          summarySegs.push({ text: i < catList.length - 1 ? '、' : '，', color: '#8a7870' })
-        })
-        summarySegs.push({ text: '离 100 种美食家又近了一步！', color: '#8a7870' })
-      }
-
-      const allergyText = allergies.length > 0
-        ? `宝宝对 ${allergies.join('、')} 可能有点敏感，我们需要继续观察哦 ⚠️`
-        : null
-
-      const triedFoods = allFoods
-        .filter(f => f.progress > 0)
-        .sort((a, b) => a.id - b.id)
-        .map(f => ({ id: f.id, name: f.name, emoji: f.emoji, categoryKey: f.categoryKey }))
-
-      return {
-        summarySegs,
-        liked:       liked.slice(0, 2),
-        disliked:    disliked.slice(0, 2),
-        allergyText,
-        triedFoods,
-      }
-    },
-
     _generate() {
       if (!this.data.allFoods || !this.data.allFoods.length) return
       this.setData({ loading: true })
@@ -156,50 +100,58 @@ Component({
     _generatePoster() {
       return new Promise((resolve, reject) => {
         const { triedCount, totalCount, babyName, allFoods } = this.data
-        const narrative  = this._computeNarrative(allFoods)
-        const triedFoods = narrative.triedFoods
+        const triedFoods = allFoods
+          .filter(f => f.progress > 0)
+          .sort((a, b) => a.id - b.id)
+          .map(f => ({ id: f.id, name: f.name, emoji: f.emoji, categoryKey: f.categoryKey }))
 
         this.createSelectorQuery()
           .select('#share-poster-canvas')
           .fields({ node: true, size: true }, res => {
             if (!res || !res.node) { reject(new Error('canvas not found')); return }
 
-            const canvas  = res.node
-            const W       = 750
-            const SEC_PAD = 48
+            const canvas = res.node
+            const W      = 750
+            const PAD    = 24
 
-            // ── Phase 1: measure text to pre-calculate layout ─────────
-            canvas.width  = W
-            canvas.height = 1
-            const ctx = canvas.getContext('2d')
+            // ── Category metadata ─────────────────────────────────────
+            const CAT_ORDER  = ['蔬菜','水果','谷物','肉类','蛋奶','豆类','坚果','香料']
+            const CAT_TOTALS = { '蔬菜':25,'水果':23,'谷物':10,'肉类':14,'蛋奶':10,'豆类':6,'坚果':6,'香料':6 }
+            const CAT_KEY    = { '蔬菜':'vegetables','水果':'fruits','谷物':'grains','肉类':'meat','蛋奶':'dairy','豆类':'legumes','坚果':'nuts','香料':'spices' }
+            const CAT_EMOJI  = { '蔬菜':'🥦','水果':'🍓','谷物':'🌾','肉类':'🥩','蛋奶':'🥛','豆类':'🫘','坚果':'🥜','香料':'🌿' }
 
-            const N_LINE_H = 46
-            ctx.font = '32px sans-serif'
-            let nx = 0, nLines = 1
-            narrative.summarySegs.forEach(seg => {
-              const sw = ctx.measureText(seg.text).width
-              if (nx + sw > W - 2 * SEC_PAD && nx > 0) { nLines++; nx = 0 }
-              nx += sw
+            const catCounts = {}
+            allFoods.forEach(f => {
+              if (f.progress > 0) catCounts[f.category] = (catCounts[f.category] || 0) + 1
             })
-            const narrativeH = nLines * N_LINE_H
 
-            const CARD_W = 162, CARD_H = 64, CARD_GAP = 8, COLS = 4
-            const gridLeft  = Math.floor((W - COLS * CARD_W - (COLS - 1) * CARD_GAP) / 2)
+            // ── Layout constants ──────────────────────────────────────
+            const HEADER_H  = 260
+            // Rings: 2 rows × 4, text inside
+            const CIRC_R    = 70   // radius of the category rings
+            const ROW_GAP   = 20     // vertical gap between the two ring rows
+            const STATS_H   = 10 + CIRC_R * 2 + ROW_GAP + CIRC_R * 2 + 18
+            // Food grid: 4 columns, compact cards
+            const COLS      = 4
+            const CARD_GAP  = 12
+            const CARD_W    = Math.floor((W - PAD * 2 - CARD_GAP * (COLS - 1)) / COLS)
+            const CARD_H    = 80
             const foodRows  = Math.ceil(triedFoods.length / COLS)
             const foodGridH = foodRows > 0 ? foodRows * (CARD_H + CARD_GAP) - CARD_GAP : 0
-
-            // ── Phase 2: total canvas height ──────────────────────────
-            const HEADER_H  = 270
-            const INSIGHT_H = 3 * 50
-            const FOOTER_H  = 100
-            const H = HEADER_H + 32
-              + narrativeH + 24
-              + INSIGHT_H + 32
+            // Footer: line1 (26px) at fy, line2 (22px) at fy+42, bottom edge ≈ fy+70
+            // Anchor H so the last pixel sits 48px above canvas edge
+            const FOOTER_CONTENT = 70   // fy → last drawn pixel
+            const BOTTOM_PAD     = 48
+            const H = HEADER_H + PAD
+              + STATS_H + PAD
               + 52
-              + foodGridH + 40
-              + FOOTER_H + 48
+              + foodGridH + PAD
+              + FOOTER_CONTENT + BOTTOM_PAD
 
+
+            canvas.width  = W
             canvas.height = H
+            const ctx = canvas.getContext('2d')
 
             // ── Helpers ───────────────────────────────────────────────
             const rr = (x, y, w, h, r) => {
@@ -212,7 +164,7 @@ Component({
               ctx.lineTo(x + r, y + h)
               ctx.arcTo(x,     y + h, x,     y + h - r, r)
               ctx.lineTo(x,     y + r)
-              ctx.arcTo(x,     y,     x + r, y,          r)
+              ctx.arcTo(x,     y,     x + r, y,         r)
               ctx.closePath()
             }
 
@@ -220,7 +172,26 @@ Component({
             ctx.fillStyle = '#fdf8f5'
             ctx.fillRect(0, 0, W, H)
 
-            // ── 2. Header ─────────────────────────────────────────────
+            // Decorative icon pattern
+            const DECO = ['🍴','🥄','🍼','🌿','✦','🍴','🥄','🍼','🌿','✦',
+                          '🍴','🥄','🍼','🌿','✦','🍴','🥄','🍼','🌿','✦']
+            const DECO_POS = [
+              [68,70],[210,38],[440,52],[628,75],[715,28],
+              [30,235],[175,290],[375,255],[575,305],[728,248],
+              [52,450],[258,482],[468,438],[658,468],[742,398],
+              [38,630],[148,685],[418,648],[598,705],[725,618],
+            ]
+            ctx.font         = '30px sans-serif'
+            ctx.textAlign    = 'center'
+            ctx.textBaseline = 'middle'
+            ctx.globalAlpha  = 0.055
+            DECO_POS.forEach(([dx, dy], i) => {
+              ctx.fillStyle = '#8a7870'
+              ctx.fillText(DECO[i], dx, Math.round(dy / 750 * H))
+            })
+            ctx.globalAlpha = 1.0
+
+            // ── 2. Header — solid color with rounded bottom ───────────
             ctx.fillStyle = '#c4a8b0'
             ctx.beginPath()
             ctx.moveTo(0, 0)
@@ -232,107 +203,129 @@ Component({
             ctx.closePath()
             ctx.fill()
 
-            const titleText = babyName ? `${babyName} 的美食家养成之路` : '宝宝的美食家养成之路'
-            ctx.fillStyle = 'rgba(255,255,255,0.95)'
-            ctx.font = 'bold 48px sans-serif'
-            ctx.textAlign = 'center'
+            const titleText = babyName ? `${babyName}的美食探险日记` : '宝宝的美食探险日记'
+            ctx.fillStyle    = 'rgba(255,255,255,0.95)'
+            ctx.font         = 'bold 46px sans-serif'
+            ctx.textAlign    = 'center'
             ctx.textBaseline = 'top'
-            ctx.fillText(titleText, W / 2, 46)
+            ctx.fillText(titleText, W / 2, 50)
 
-            ctx.fillStyle = 'rgba(255,255,255,0.68)'
-            ctx.font = '30px sans-serif'
-            ctx.fillText("Baby's First 100 Foods", W / 2, 112)
+            ctx.fillStyle = 'rgba(255,255,255,0.70)'
+            ctx.font      = '28px sans-serif'
+            ctx.fillText("Baby's First 100 Foods", W / 2, 110)
 
-            ctx.font = 'bold 36px sans-serif'
-            const badge  = `已探索 ${triedCount} / ${totalCount} 种食物`
-            const badgeW = ctx.measureText(badge).width + 64
+            // Progress pill badge
+            ctx.font = 'bold 34px sans-serif'
+            const badge  = `✨ ${triedCount} / ${totalCount} 种已探索`
+            const badgeW = ctx.measureText(badge).width + 60
             ctx.fillStyle = 'rgba(255,255,255,0.22)'
-            rr((W - badgeW) / 2, 162, badgeW, 58, 29)
+            rr((W - badgeW) / 2, 168, badgeW, 62, 31)
             ctx.fill()
-            ctx.fillStyle = '#fff'
+            ctx.fillStyle    = '#fff'
             ctx.textBaseline = 'middle'
-            ctx.fillText(badge, W / 2, 191)
+            ctx.fillText(badge, W / 2, 200)
 
-            // ── 3. Narrative text (inline colored) ────────────────────
-            let y = HEADER_H + 32
-            ctx.font = '32px sans-serif'
-            ctx.textBaseline = 'top'
-            let curX = SEC_PAD
-            narrative.summarySegs.forEach(seg => {
-              const sw = ctx.measureText(seg.text).width
-              if (curX + sw > W - SEC_PAD && curX > SEC_PAD) {
-                curX = SEC_PAD
-                y += N_LINE_H
+            // ── 3. Category ring stats — 2 rows × 4 ──────────────────
+            const statsY    = HEADER_H + PAD
+            const PER_ROW   = 4
+            const ringSpace = W / PER_ROW   // slot width per ring
+
+            CAT_ORDER.forEach((cat, ci) => {
+              const row   = Math.floor(ci / PER_ROW)
+              const col   = ci % PER_ROW
+              const cx    = Math.round(ringSpace * col + ringSpace / 2)
+              const cy    = statsY + 10 + CIRC_R + row * (CIRC_R * 2 + ROW_GAP)
+              const tried = catCounts[cat] || 0
+              const total = CAT_TOTALS[cat]
+              const pct   = tried / total
+              const color = THEME_COLORS[CAT_KEY[cat]] || THEME_COLORS.primary
+
+              // Track circle fill
+              ctx.beginPath()
+              ctx.arc(cx, cy, CIRC_R, 0, Math.PI * 2)
+              ctx.fillStyle = hexToRgba(color, 0.12)
+              ctx.fill()
+
+              // Progress arc (outer edge)
+              if (pct > 0) {
+                ctx.beginPath()
+                ctx.arc(cx, cy, CIRC_R - 4, -Math.PI / 2, -Math.PI / 2 + pct * Math.PI * 2)
+                ctx.strokeStyle = color
+                ctx.lineWidth   = 7
+                ctx.lineCap     = 'round'
+                ctx.stroke()
               }
-              ctx.fillStyle = seg.color
-              ctx.textAlign = 'left'
-              ctx.fillText(seg.text, curX, y)
-              curX += sw
-            })
-            y += N_LINE_H + 20
 
-            // ── 4. Insight lines ──────────────────────────────────────
-            const liked2       = narrative.liked.slice(0, 2).join('、') || '还没有哦'
-            const disliked2    = narrative.disliked.slice(0, 2).join('、') || '还没有哦'
-            const allergyShort = narrative.allergyText
-              ? narrative.allergyText.replace('宝宝对 ', '').replace('，我们需要继续观察哦 ⚠️', '')
-              : '暂无记录 ✓'
-            const insightLines = [
-              { icon: '🥰', label: '最爱',   val: liked2        },
-              { icon: '🥺', label: '不太爱', val: disliked2     },
-              { icon: '⚠️', label: '敏感',   val: allergyShort  },
-            ]
-            ctx.font = '32px sans-serif'
-            ctx.textBaseline = 'top'
-            ctx.textAlign = 'left'
-            insightLines.forEach(ins => {
+              // Three lines inside the ring: emoji / cat name / count
+              ctx.textAlign = 'center'
+
+              ctx.font         = '36px sans-serif'
+              ctx.textBaseline = 'middle'
+              ctx.fillStyle    = hexDarken(color, 10)
+              ctx.fillText(CAT_EMOJI[cat], cx, cy - 28)
+
+              ctx.font      = '28px sans-serif'
               ctx.fillStyle = '#8a7870'
-              ctx.fillText(`${ins.icon} ${ins.label}：${ins.val}`, SEC_PAD, y)
-              y += 50
-            })
-            y += 20
+              ctx.fillText(cat, cx, cy + 8)
 
-            // ── 5. Food card grid ─────────────────────────────────────
-            ctx.fillStyle = '#8a7870'
-            ctx.font = 'bold 32px sans-serif'
-            ctx.textAlign = 'left'
+              ctx.font      = 'bold 26px sans-serif'
+              ctx.fillStyle = tried > 0 ? color : '#ccc'
+              ctx.fillText(`${tried}/${total}`, cx, cy + 38)
+            })
+
+            // ── 4. Food sticker grid ──────────────────────────────────
+            let gy = HEADER_H + PAD + STATS_H + PAD
+
+            ctx.fillStyle    = '#8a7870'
+            ctx.font         = 'bold 30px sans-serif'
+            ctx.textAlign    = 'left'
             ctx.textBaseline = 'top'
-            ctx.fillText(`已探索食物 · ${triedCount} 种`, SEC_PAD, y)
-            y += 52
+            ctx.fillText(`🍽 食物探索地图 · ${triedCount} 种`, PAD, gy)
+            gy += 52
 
             triedFoods.forEach((food, i) => {
               const col   = i % COLS
               const row   = Math.floor(i / COLS)
-              const cx    = gridLeft + col * (CARD_W + CARD_GAP)
-              const cy    = y + row * (CARD_H + CARD_GAP)
+              const cx    = PAD + col * (CARD_W + CARD_GAP)
+              const cy    = gy + row * (CARD_H + CARD_GAP)
               const color = THEME_COLORS[food.categoryKey] || THEME_COLORS.primary
 
-              ctx.fillStyle = hexToRgba(color, 0.20)
-              rr(cx, cy, CARD_W, CARD_H, 14)
+              // Sticker card bg
+              ctx.fillStyle = hexToRgba(color, 0.18)
+              rr(cx, cy, CARD_W, CARD_H, 20)
               ctx.fill()
 
-              ctx.font = '30px sans-serif'
-              ctx.textAlign = 'left'
-              ctx.textBaseline = 'middle'
-              ctx.fillStyle = hexDarken(color, 20)
-              ctx.fillText(food.emoji, cx + 10, cy + CARD_H / 2)
+              // Left accent stripe
+              ctx.fillStyle   = color
+              ctx.globalAlpha = 0.65
+              rr(cx, cy + 10, 5, CARD_H - 20, 3)
+              ctx.fill()
+              ctx.globalAlpha = 1.0
 
-              ctx.font = '26px sans-serif'
-              ctx.fillStyle = hexDarken(color, 45)
+              // Emoji
+              ctx.font         = '30px sans-serif'
+              ctx.textAlign    = 'center'
+              ctx.textBaseline = 'middle'
+              ctx.fillStyle    = hexDarken(color, 10)
+              ctx.fillText(food.emoji, cx + 26, cy + CARD_H / 2)
+
+              // Name
+              ctx.font      = '24px sans-serif'
+              ctx.textAlign = 'left'
+              ctx.fillStyle = hexDarken(color, 50)
               ctx.fillText(food.name, cx + 46, cy + CARD_H / 2)
             })
 
-            y += foodGridH + 36
-
-            // ── 6. Footer ─────────────────────────────────────────────
-            ctx.fillStyle = '#c4bcb8'
-            ctx.font = '26px sans-serif'
-            ctx.textAlign = 'center'
+            // ── 5. Footer ─────────────────────────────────────────────
+            const fy = gy + foodGridH + PAD
+            ctx.fillStyle    = '#c4bcb8'
+            ctx.font         = '24px sans-serif'
+            ctx.textAlign    = 'center'
             ctx.textBaseline = 'top'
-            ctx.fillText('继续探索，每一口都是新发现 🌱', W / 2, y)
+            ctx.fillText('继续探索，每一口都是新发现 🌱', W / 2, fy)
             ctx.fillStyle = '#d4c8c4'
-            ctx.font = '24px sans-serif'
-            ctx.fillText("🍼宝宝食物初体验 · Baby's First 100 Foods🍼", W / 2, y + 50)
+            ctx.font      = '22px sans-serif'
+            ctx.fillText("🍼 宝宝食物初体验 · Baby's First 100 Foods 🍼", W / 2, fy + 42)
 
             // ── Export ────────────────────────────────────────────────
             wx.canvasToTempFilePath({
