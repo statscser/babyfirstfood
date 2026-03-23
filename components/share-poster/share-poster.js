@@ -329,43 +329,63 @@ Component({
             ctx.font      = '22px sans-serif'
             ctx.fillText("🍼 宝宝食物初体验", PAD, fy + 72)
 
-            // QR code placeholder — bottom right
+            // QR code — bottom right
             const qrX = W - PAD - QR_SIZE
             const qrY = fy
-            // White rounded box
-            ctx.fillStyle = '#fff'
-            rr(qrX, qrY, QR_SIZE, QR_SIZE, 8); ctx.fill()
-            ctx.strokeStyle = '#e0d8d4'; ctx.lineWidth = 1.5
-            rr(qrX, qrY, QR_SIZE, QR_SIZE, 8); ctx.stroke()
-            // Three corner markers (QR code style)
-            const qSq = 20, qPad = 9
-            ;[[qPad, qPad], [QR_SIZE - qPad - qSq, qPad], [qPad, QR_SIZE - qPad - qSq]].forEach(([ox, oy]) => {
-              ctx.fillStyle = '#c4bcb8'
-              ctx.fillRect(qrX + ox, qrY + oy, qSq, qSq)
-              ctx.fillStyle = '#fff'
-              ctx.fillRect(qrX + ox + 3, qrY + oy + 3, qSq - 6, qSq - 6)
-              ctx.fillStyle = '#c4bcb8'
-              ctx.fillRect(qrX + ox + 7, qrY + oy + 7, qSq - 14, qSq - 14)
-            })
-            // Dot pattern (center area)
-            ctx.fillStyle = '#c4bcb8'
-            ;[[48, 40],[58, 40],[48, 52],[60, 52],[52, 62]].forEach(([gx, gy2]) => {
-              ctx.fillRect(qrX + gx - 3, qrY + gy2 - 3, 7, 7)
-            })
-            // Label
-            ctx.font = '16px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'
-            ctx.fillStyle = '#c4bcb8'
-            ctx.fillText('小程序', qrX + QR_SIZE / 2, qrY + QR_SIZE - 3)
 
-            // ── Export ────────────────────────────────────────────────
-            wx.canvasToTempFilePath({
-              canvas, x: 0, y: 0,
-              width: W, height: H,
-              destWidth: W, destHeight: H,
-              fileType: 'png',
-              success: r => resolve(r.tempFilePath),
-              fail:    reject,
-            })
+            const drawQrPlaceholder = () => {
+              // White rounded box
+              ctx.fillStyle = '#fff'
+              rr(qrX, qrY, QR_SIZE, QR_SIZE, 8); ctx.fill()
+              ctx.strokeStyle = '#e0d8d4'; ctx.lineWidth = 1.5
+              rr(qrX, qrY, QR_SIZE, QR_SIZE, 8); ctx.stroke()
+              // Three corner markers (QR code style)
+              const qSq = 20, qPad = 9
+              ;[[qPad, qPad], [QR_SIZE - qPad - qSq, qPad], [qPad, QR_SIZE - qPad - qSq]].forEach(([ox, oy]) => {
+                ctx.fillStyle = '#c4bcb8'
+                ctx.fillRect(qrX + ox, qrY + oy, qSq, qSq)
+                ctx.fillStyle = '#fff'
+                ctx.fillRect(qrX + ox + 3, qrY + oy + 3, qSq - 6, qSq - 6)
+                ctx.fillStyle = '#c4bcb8'
+                ctx.fillRect(qrX + ox + 7, qrY + oy + 7, qSq - 14, qSq - 14)
+              })
+              // Dot pattern (center area)
+              ctx.fillStyle = '#c4bcb8'
+              ;[[48, 40],[58, 40],[48, 52],[60, 52],[52, 62]].forEach(([gx, gy2]) => {
+                ctx.fillRect(qrX + gx - 3, qrY + gy2 - 3, 7, 7)
+              })
+              // Label
+              ctx.font = '16px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'
+              ctx.fillStyle = '#c4bcb8'
+              ctx.fillText('小程序', qrX + QR_SIZE / 2, qrY + QR_SIZE - 3)
+            }
+
+            const exportCanvas = () => {
+              wx.canvasToTempFilePath({
+                canvas, x: 0, y: 0,
+                width: W, height: H,
+                destWidth: W, destHeight: H,
+                fileType: 'png',
+                success: r => resolve(r.tempFilePath),
+                fail:    reject,
+              })
+            }
+
+            // In development mode show placeholder so the dev tool never shows a broken image
+            let isDev = false
+            try {
+              isDev = wx.getAccountInfoSync().miniProgram.envVersion === 'develop'
+            } catch (e) {}
+
+            if (isDev) {
+              drawQrPlaceholder()
+              exportCanvas()
+            } else {
+              const qrImg = canvas.createImage()
+              qrImg.onload  = () => { ctx.drawImage(qrImg, qrX, qrY, QR_SIZE, QR_SIZE); exportCanvas() }
+              qrImg.onerror = () => { drawQrPlaceholder(); exportCanvas() }
+              qrImg.src = '/assets/images/qr-code.png'
+            }
           })
           .exec()
       })
