@@ -198,6 +198,19 @@ Component({
       })
     },
 
+    onDeleteTap() {
+      wx.showModal({
+        title: '删除自定义食物',
+        content: `确定要删除「${this.data.food.name}」吗？删除后无法恢复。`,
+        confirmText: '删除',
+        confirmColor: '#b05050',
+        cancelText: '取消',
+        success: (res) => {
+          if (res.confirm) this.triggerEvent('delete', { id: this.data.food.id })
+        },
+      })
+    },
+
     onResetTap() {
       wx.showModal({
         title: '清除全部记录',

@@ -13,7 +13,7 @@
       <text class="header-badge-total">/{{totalCount}}</text>
     </view>
     <view class="header-share" bindtap="onShareTap">
-      <text class="header-share-icon">📤</text>
+      <text class="header-share-icon">⬆</text>
     </view>
   </view>
 
@@ -130,6 +130,7 @@
           food="{{activeFood}}"
           bind:save="onSaveRecord"
           bind:close="onMaskTap"
+          bind:delete="onDeleteFood"
         />
       </view>
 
@@ -139,8 +140,15 @@
   <!-- ==================== 食物网格 ==================== -->
   <view class="grid-wrap">
     <view wx:if="{{displayFoods.length === 0}}" class="empty-state">
-      <text class="empty-emoji">🌱</text>
-      <text class="empty-text">暂无匹配的食物</text>
+      <text class="empty-emoji">{{searchValue ? '🔍' : '🌱'}}</text>
+      <block wx:if="{{searchValue}}">
+        <text class="empty-text">没有找到「{{searchValue}}」</text>
+        <text class="empty-hint">没关系，你可以手动添加到宝宝的食物清单！</text>
+        <view class="empty-add-btn" bindtap="onAddFoodTap" data-prefill="{{searchValue}}">
+          <text class="empty-add-text">+ 添加「{{searchValue}}」</text>
+        </view>
+      </block>
+      <text wx:else class="empty-text">暂无匹配的食物</text>
     </view>
 
     <view class="food-grid">
@@ -164,6 +172,48 @@
             class="dot {{dot.cls}}"
           ></view>
         </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ==================== 意见反馈 ==================== -->
+  <view class="feedback-wrap">
+    <button class="feedback-btn" open-type="feedback">💬 意见反馈</button>
+  </view>
+
+  <!-- ==================== 自定义食物 Modal ==================== -->
+  <view wx:if="{{customFoodModal}}" class="cf-overlay" catchtap="onCancelCustomFood">
+    <view class="cf-modal" catchtap="preventBubble">
+      <text class="cf-title">添加自定义食物</text>
+
+      <view class="cf-field">
+        <text class="cf-label">食物分类</text>
+        <picker mode="selector" range="{{customCategoryOptions}}" value="{{customCategoryIndex}}" bindchange="onCustomCategoryChange">
+          <view class="cf-picker">
+            <text class="cf-picker-text">{{customCategoryOptions[customCategoryIndex]}}</text>
+            <text class="cf-picker-arrow">▾</text>
+          </view>
+        </picker>
+      </view>
+
+      <view class="cf-field">
+        <text class="cf-label">食物名称 *</text>
+        <input class="cf-input" placeholder="如：有机胡萝卜" value="{{customFoodForm.name}}" bindinput="onCustomFoodNameInput" maxlength="10" />
+      </view>
+
+      <view class="cf-field">
+        <text class="cf-label">Emoji 图标</text>
+        <input class="cf-input" placeholder="选完分类会自动填入，可修改" value="{{customFoodForm.emoji}}" bindinput="onCustomFoodEmojiInput" maxlength="2" />
+      </view>
+
+      <view class="cf-field">
+        <text class="cf-label">英文名（选填）</text>
+        <input class="cf-input" placeholder="如：Organic Carrot" value="{{customFoodForm.en}}" bindinput="onCustomFoodEnInput" maxlength="30" />
+      </view>
+
+      <view class="cf-actions">
+        <view class="cf-btn cf-cancel" bindtap="onCancelCustomFood">取消</view>
+        <view class="cf-btn cf-confirm" bindtap="onConfirmCustomFood">添加</view>
       </view>
     </view>
   </view>

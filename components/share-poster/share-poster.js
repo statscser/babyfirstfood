@@ -80,7 +80,7 @@ Component({
     },
 
     onShare() {
-      wx.shareImageMessage({
+      wx.showShareImageMenu({
         path: this.data.posterPath,
         fail: () => wx.showToast({ title: '长按图片可保存后手动分享', icon: 'none' }),
       })
@@ -122,7 +122,7 @@ Component({
 
             const catCounts = {}
             allFoods.forEach(f => {
-              if (f.progress > 0) catCounts[f.category] = (catCounts[f.category] || 0) + 1
+              if (f.progress > 0 && !f.isCustom) catCounts[f.category] = (catCounts[f.category] || 0) + 1
             })
 
             // ── Layout constants ──────────────────────────────────────
@@ -138,9 +138,8 @@ Component({
             const CARD_H    = 80
             const foodRows  = Math.ceil(triedFoods.length / COLS)
             const foodGridH = foodRows > 0 ? foodRows * (CARD_H + CARD_GAP) - CARD_GAP : 0
-            // Footer: line1 (26px) at fy, line2 (22px) at fy+42, bottom edge ≈ fy+70
-            // Anchor H so the last pixel sits 48px above canvas edge
-            const FOOTER_CONTENT = 70   // fy → last drawn pixel
+            // Footer: text left + QR placeholder right (100×100)
+            const FOOTER_CONTENT = 100   // fy → last drawn pixel (= QR_SIZE)
             const BOTTOM_PAD     = 48
             const H = HEADER_H + PAD
               + STATS_H + PAD
@@ -317,15 +316,46 @@ Component({
             })
 
             // ── 5. Footer ─────────────────────────────────────────────
+            const QR_SIZE = 100
             const fy = gy + foodGridH + PAD
+
+            // Left text
             ctx.fillStyle    = '#c4bcb8'
             ctx.font         = '24px sans-serif'
-            ctx.textAlign    = 'center'
+            ctx.textAlign    = 'left'
             ctx.textBaseline = 'top'
-            ctx.fillText('继续探索，每一口都是新发现 🌱', W / 2, fy)
+            ctx.fillText('继续探索，每一口都是新发现 🌱', PAD, fy + 30)
             ctx.fillStyle = '#d4c8c4'
             ctx.font      = '22px sans-serif'
-            ctx.fillText("🍼 宝宝食物初体验 · Baby's First 100 Foods 🍼", W / 2, fy + 42)
+            ctx.fillText("🍼 宝宝食物初体验", PAD, fy + 72)
+
+            // QR code placeholder — bottom right
+            const qrX = W - PAD - QR_SIZE
+            const qrY = fy
+            // White rounded box
+            ctx.fillStyle = '#fff'
+            rr(qrX, qrY, QR_SIZE, QR_SIZE, 8); ctx.fill()
+            ctx.strokeStyle = '#e0d8d4'; ctx.lineWidth = 1.5
+            rr(qrX, qrY, QR_SIZE, QR_SIZE, 8); ctx.stroke()
+            // Three corner markers (QR code style)
+            const qSq = 20, qPad = 9
+            ;[[qPad, qPad], [QR_SIZE - qPad - qSq, qPad], [qPad, QR_SIZE - qPad - qSq]].forEach(([ox, oy]) => {
+              ctx.fillStyle = '#c4bcb8'
+              ctx.fillRect(qrX + ox, qrY + oy, qSq, qSq)
+              ctx.fillStyle = '#fff'
+              ctx.fillRect(qrX + ox + 3, qrY + oy + 3, qSq - 6, qSq - 6)
+              ctx.fillStyle = '#c4bcb8'
+              ctx.fillRect(qrX + ox + 7, qrY + oy + 7, qSq - 14, qSq - 14)
+            })
+            // Dot pattern (center area)
+            ctx.fillStyle = '#c4bcb8'
+            ;[[48, 40],[58, 40],[48, 52],[60, 52],[52, 62]].forEach(([gx, gy2]) => {
+              ctx.fillRect(qrX + gx - 3, qrY + gy2 - 3, 7, 7)
+            })
+            // Label
+            ctx.font = '16px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'
+            ctx.fillStyle = '#c4bcb8'
+            ctx.fillText('小程序', qrX + QR_SIZE / 2, qrY + QR_SIZE - 3)
 
             // ── Export ────────────────────────────────────────────────
             wx.canvasToTempFilePath({

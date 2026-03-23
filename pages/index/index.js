@@ -1,6 +1,9 @@
 import { INITIAL_FOODS } from '../../data/initialFoods'
 
-const STORAGE_KEY = 'USER_RECORDS'
+const STORAGE_KEY      = 'USER_RECORDS'
+const CUSTOM_FOODS_KEY = 'CUSTOM_FOODS'
+const CATEGORY_LIST    = ['蔬菜','水果','谷物','肉类','蛋奶','豆类','坚果','香料']
+const CAT_DEFAULT_EMOJI = { '蔬菜':'🥦','水果':'🍓','谷物':'🌾','肉类':'🥩','蛋奶':'🥛','豆类':'🫘','坚果':'🥜','香料':'🌿' }
 const LIKE_EMOJIS = ['🥺', '😕', '😐', '😊', '🥰']
 
 // 手动标注拼音（无声调、无空格拼接），确保跨平台排序一致
@@ -192,6 +195,11 @@ Page({
     sortOpen: false,
     // poster
     posterVisible: false,
+    // custom food modal
+    customFoodModal: false,
+    customFoodForm: { name: '', emoji: '🥦', en: '' },
+    customCategoryIndex: 0,
+    customCategoryOptions: CATEGORY_LIST,
   },
 
   onLoad() {
@@ -205,8 +213,12 @@ Page({
   // ─── data helpers ────────────────────────────────────────
 
   _loadAndRender() {
-    const records = wx.getStorageSync(STORAGE_KEY) || {}
-    const allFoods = this._mergeData(records)
+    const records     = wx.getStorageSync(STORAGE_KEY) || {}
+    const customFoods = wx.getStorageSync(CUSTOM_FOODS_KEY) || []
+    const allFoods    = [
+      ...this._mergeData(INITIAL_FOODS, records),
+      ...this._mergeData(customFoods, records),
+    ]
     const triedCount = allFoods.filter(f => f.progress > 0).length
     const todayTasks = this._computeTodayTasks(allFoods)
     this.setData({ allFoods, totalCount: allFoods.length, triedCount, todayTasks })
@@ -235,8 +247,8 @@ Page({
       .sort((a, b) => priority(a) - priority(b))
   },
 
-  _mergeData(records) {
-    return INITIAL_FOODS.map(food => {
+  _mergeData(foods, records) {
+    return foods.map(food => {
       const r = records[food.id] || {}
       const stored = r.progressList || []
       const progressList = [0, 1, 2].map(i =>
@@ -268,7 +280,7 @@ Page({
     const q = searchValue.trim().toLowerCase()
     if (q) {
       list = list.filter(f =>
-        f.name.indexOf(q) !== -1 || f.en.toLowerCase().indexOf(q) !== -1
+        f.name.indexOf(q) !== -1 || (f.en || '').toLowerCase().indexOf(q) !== -1
       )
     }
     list = this._sortList(list)
@@ -279,8 +291,8 @@ Page({
     const mode = this.data.sortMode
     if (mode === 'pinyin') {
       return list.slice().sort((a, b) => {
-        const pa = FOOD_PINYIN[a.id] || ''
-        const pb = FOOD_PINYIN[b.id] || ''
+        const pa = FOOD_PINYIN[a.id] || a.name
+        const pb = FOOD_PINYIN[b.id] || b.name
         return pa < pb ? -1 : pa > pb ? 1 : 0
       })
     }
@@ -394,5 +406,76 @@ Page({
 
   onClosePoster() {
     this.setData({ posterVisible: false })
+  },
+
+  // ─── custom food ─────────────────────────────────────
+
+  onAddFoodTap(e) {
+    const prefill = (e && e.currentTarget && e.currentTarget.dataset.prefill) || ''
+    this.setData({
+      customFoodModal: true,
+      customFoodForm: { name: prefill, emoji: CAT_DEFAULT_EMOJI[CATEGORY_LIST[0]], en: '' },
+      customCategoryIndex: 0,
+    })
+  },
+
+  onCustomFoodNameInput(e) {
+    this.setData({ 'customFoodForm.name': e.detail.value })
+  },
+
+  onCustomFoodEmojiInput(e) {
+    this.setData({ 'customFoodForm.emoji': e.detail.value })
+  },
+
+  onCustomFoodEnInput(e) {
+    this.setData({ 'customFoodForm.en': e.detail.value })
+  },
+
+  onCustomCategoryChange(e) {
+    const idx         = Number(e.detail.value)
+    const defaultEmoji = CAT_DEFAULT_EMOJI[CATEGORY_LIST[idx]]
+    // Auto-fill emoji if it's still one of the category defaults (user hasn't customised it)
+    const cur        = this.data.customFoodForm.emoji
+    const isDefault  = !cur || Object.values(CAT_DEFAULT_EMOJI).includes(cur)
+    this.setData({
+      customCategoryIndex: idx,
+      ...(isDefault ? { 'customFoodForm.emoji': defaultEmoji } : {}),
+    })
+  },
+
+  onCancelCustomFood() {
+    this.setData({ customFoodModal: false })
+  },
+
+  onConfirmCustomFood() {
+    const { customFoodForm, customCategoryIndex, customCategoryOptions } = this.data
+    const name = customFoodForm.name.trim()
+    if (!name) {
+      wx.showToast({ title: '请输入食物名称', icon: 'none' })
+      return
+    }
+    const category = customCategoryOptions[customCategoryIndex]
+    const emoji    = customFoodForm.emoji.trim() || CAT_DEFAULT_EMOJI[category] || '🍽'
+    const en       = customFoodForm.en.trim()
+    const newFood  = { id: Date.now(), name, emoji, en, category, isCustom: true }
+    const customs  = wx.getStorageSync(CUSTOM_FOODS_KEY) || []
+    wx.setStorageSync(CUSTOM_FOODS_KEY, [...customs, newFood])
+    this.setData({ customFoodModal: false })
+    this._loadAndRender()
+    wx.showToast({ title: '已添加 ✓', icon: 'none', duration: 1200 })
+  },
+
+  onDeleteFood(e) {
+    const id      = e.detail.id
+    const customs = wx.getStorageSync(CUSTOM_FOODS_KEY) || []
+    wx.setStorageSync(CUSTOM_FOODS_KEY, customs.filter(f => f.id !== id))
+    const records = wx.getStorageSync(STORAGE_KEY) || {}
+    delete records[id]
+    wx.setStorageSync(STORAGE_KEY, records)
+    this._loadAndRender()
+    this.setData({ activeId: null }, () => {
+      setTimeout(() => this.setData({ activeFood: null }), 480)
+    })
+    wx.showToast({ title: '已删除', icon: 'none', duration: 1200 })
   },
 })

@@ -216,16 +216,33 @@
    保存按钮（底部固定）
    ======================================================= */
 .back-footer {
-  padding: 16rpx 28rpx 28rpx;
+  padding: 16rpx 28rpx 20rpx;
   flex-shrink: 0;
   border-top: 1rpx solid rgba(0,0,0,0.05);
   background: #fffdf9;
   border-radius: 0 0 32rpx 32rpx;
   display: flex;
+  flex-direction: column;
+  gap: 0rpx;
+}
+.footer-buttons {
+  display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
   gap: 16rpx;
+}
+.delete-food-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 20rpx;
+  padding-bottom: 8rpx;
+}
+.delete-food-text {
+  font-size: 26rpx;
+  color: #b05050;
+  letter-spacing: 1rpx;
 }
 .reset-btn {
   width: 40%;

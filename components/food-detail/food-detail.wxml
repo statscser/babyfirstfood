@@ -177,8 +177,13 @@
 
   <!-- 底部操作区 -->
   <view class="back-footer">
-    <view class="reset-btn" catchtap="onResetTap">重置</view>
-    <view class="save-btn" catchtap="onSaveTap">保存记录</view>
+    <view class="footer-buttons">
+      <view class="reset-btn" catchtap="onResetTap">重置</view>
+      <view class="save-btn" catchtap="onSaveTap">保存记录</view>
+    </view>
+    <view wx:if="{{food.isCustom}}" class="delete-food-row" catchtap="onDeleteTap">
+      <text class="delete-food-text">删除食物</text>
+    </view>
   </view>
 
 </view>
