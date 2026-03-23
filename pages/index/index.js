@@ -197,6 +197,8 @@ Page({
     posterVisible: false,
     // back to top
     showBackTop: false,
+    // first-launch notice banner
+    showNoticeBanner: false,
     // custom food modal
     customFoodModal: false,
     customFoodForm: { name: '', emoji: '🥦', en: '' },
@@ -206,10 +208,18 @@ Page({
 
   onLoad() {
     this._loadAndRender()
+    if (!wx.getStorageSync('HAS_READ_NOTICE')) {
+      this.setData({ showNoticeBanner: true })
+    }
   },
 
   onShow() {
     this._loadAndRender()
+  },
+
+  onDismissNotice() {
+    wx.setStorageSync('HAS_READ_NOTICE', true)
+    this.setData({ showNoticeBanner: false })
   },
 
   onPageScroll(e) {

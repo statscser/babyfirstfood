@@ -224,6 +224,14 @@
     </view>
   </view>
 
+  <!-- ==================== 首次启动提示横幅 ==================== -->
+  <view wx:if="{{showNoticeBanner}}" class="notice-banner">
+    <text class="notice-text">温馨提示：数据仅保存在本地设备，更换手机或清理缓存将导致记录丢失。本程序不提供医疗建议。</text>
+    <view class="notice-close" bindtap="onDismissNotice">
+      <text class="notice-close-icon">×</text>
+    </view>
+  </view>
+
   <!-- ==================== 回到顶部 ==================== -->
   <view wx:if="{{showBackTop}}" class="back-top" bindtap="onBackTopTap">
     <view class="back-top-arrow"></view>

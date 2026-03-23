@@ -364,3 +364,22 @@
 .empty-add-btn  { margin-top: 8rpx; padding: 20rpx 48rpx; background: #c4a8b0; border-radius: 40rpx; box-shadow: 0 4rpx 16rpx rgba(196,168,176,0.4); }
 .empty-add-text { font-size: 28rpx; color: #fff; font-weight: 600; }
 
+/* =======================================================
+   首次启动提示横幅
+   ======================================================= */
+.notice-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  background: rgba(80, 68, 64, 0.92);
+  padding: 24rpx 32rpx 40rpx;
+  gap: 20rpx;
+}
+.notice-text      { flex: 1; font-size: 22rpx; color: rgba(255,255,255,0.80); line-height: 1.7; }
+.notice-close     { flex-shrink: 0; width: 44rpx; height: 44rpx; display: flex; align-items: center; justify-content: center; }
+.notice-close-icon { font-size: 40rpx; color: rgba(255,255,255,0.55); line-height: 1; }
+
