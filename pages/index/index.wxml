@@ -13,7 +13,13 @@
       <text class="header-badge-total">/{{totalCount}}</text>
     </view>
     <view class="header-share" bindtap="onShareTap">
-      <text class="header-share-icon">⬆</text>
+      <view class="share-icon">
+        <view class="si-line si-line-top"></view>
+        <view class="si-line si-line-bottom"></view>
+        <view class="si-dot si-dot-left"></view>
+        <view class="si-dot si-dot-top"></view>
+        <view class="si-dot si-dot-bottom"></view>
+      </view>
     </view>
   </view>
 
@@ -216,6 +222,11 @@
         <view class="cf-btn cf-confirm" bindtap="onConfirmCustomFood">添加</view>
       </view>
     </view>
+  </view>
+
+  <!-- ==================== 回到顶部 ==================== -->
+  <view wx:if="{{showBackTop}}" class="back-top" bindtap="onBackTopTap">
+    <view class="back-top-arrow"></view>
   </view>
 
   <!-- ==================== 分享海报组件 ==================== -->

@@ -28,7 +28,6 @@
       <!-- 海报图片 -->
       <view wx:elif="{{posterPath}}" class="sp-img-wrap">
         <image class="sp-img" src="{{posterPath}}" mode="widthFix" show-menu-by-longpress="{{true}}" />
-        <text class="sp-hint">💡 长按图片也可直接保存或转发</text>
       </view>
 
       <!-- 无记录占位 -->

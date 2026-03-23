@@ -195,6 +195,8 @@ Page({
     sortOpen: false,
     // poster
     posterVisible: false,
+    // back to top
+    showBackTop: false,
     // custom food modal
     customFoodModal: false,
     customFoodForm: { name: '', emoji: '🥦', en: '' },
@@ -208,6 +210,11 @@ Page({
 
   onShow() {
     this._loadAndRender()
+  },
+
+  onPageScroll(e) {
+    const show = e.scrollTop > 300
+    if (show !== this.data.showBackTop) this.setData({ showBackTop: show })
   },
 
   // ─── data helpers ────────────────────────────────────────
@@ -402,6 +409,10 @@ Page({
 
   onShareTap() {
     this.setData({ posterVisible: true })
+  },
+
+  onBackTopTap() {
+    wx.pageScrollTo({ scrollTop: 0, duration: 300 })
   },
 
   onClosePoster() {
