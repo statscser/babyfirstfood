@@ -232,38 +232,5 @@ Component({
       })
     },
 
-    // ─── DEV ONLY ─────────────────────────────────────────────
-
-    onDebugFill() {
-      const count    = Math.floor(Math.random() * 3) + 1
-      const typePool = ['safe', 'safe', 'caution', 'allergic']
-      const notePool = [
-        '初次尝试，给了小半勺，宝宝接受良好，未见不适反应。',
-        '第二次喂食，宝宝很喜欢，主动张口，嘴边有轻微红晕，继续观察。',
-        '三次尝试均无过敏症状，顺利通过，可以正常加入辅食菜单。',
-      ]
-      const today = new Date()
-      const progressList = [0, 1, 2].map(i => {
-        if (i >= count) return { status: '', date: '', type: 'safe' }
-        const d = new Date(today)
-        d.setDate(d.getDate() - (count - i) * 3)
-        const date = [
-          d.getFullYear(),
-          String(d.getMonth() + 1).padStart(2, '0'),
-          String(d.getDate()).padStart(2, '0'),
-        ].join('-')
-        return { status: 'recorded', date, type: typePool[i] }
-      })
-      this.setData({
-        editingRecord: {
-          progressList,
-          likeLevel: Math.ceil(Math.random() * 5),
-          note:      notePool[count - 1],
-        },
-        expandedSlot: null,
-      })
-    },
-
-    // ─── /DEV ONLY ────────────────────────────────────────────
   },
 })

@@ -166,11 +166,6 @@
       />
     </view>
 
-    <!-- ===== DEV ONLY: debug fill ===== -->
-    <view class="debug-btn" catchtap="onDebugFill">
-      <text class="debug-btn-text">🐛 测试：随机填充排敏数据</text>
-    </view>
-    <!-- ===== /DEV ONLY ===== -->
 
   </view>
   <!-- /back-body -->

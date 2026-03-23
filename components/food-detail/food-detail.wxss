@@ -197,20 +197,6 @@
 }
 .note-placeholder { color: var(--text-en); font-size: 30rpx; }
 
-/* =======================================================
-   ===== DEV ONLY =====
-   ======================================================= */
-.debug-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 14rpx 0;
-  border-radius: 12rpx;
-  border: 2rpx dashed #c8c0bc;
-  background: transparent;
-}
-.debug-btn-text { font-size: 22rpx; color: #b0a8a4; letter-spacing: 1rpx; }
-/* ===== /DEV ONLY ===== */
 
 /* =======================================================
    保存按钮（底部固定）
