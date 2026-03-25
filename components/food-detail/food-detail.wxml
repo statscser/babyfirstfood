@@ -12,7 +12,7 @@
   </view>
 
   <!-- ── 主体（可滚动） ── -->
-  <view class="back-body">
+  <scroll-view class="back-body" scroll-y enhanced show-scrollbar="{{false}}" style="height:{{bodyHeight}};" catchtouchmove="preventBubble">
 
     <!-- 喂食记录 -->
     <view class="back-section">
@@ -134,6 +134,28 @@
         </view>
 
       </view>
+
+      <!-- 过敏症状入口 -->
+      <view wx:if="{{hasAllergicSlot}}" class="symptom-entry" catchtap="onOpenSymptomModal">
+        <view class="symptom-entry-left">
+          <text class="symptom-entry-title">⚠️ 过敏症状</text>
+          <view wx:if="{{editingRecord.symptoms.length > 0}}" class="symptom-chips-row">
+            <text wx:for="{{editingRecord.symptoms}}" wx:key="*this" class="symptom-chip">{{symptomLabels[item]}}</text>
+          </view>
+          <text wx:else class="symptom-entry-hint">点击记录具体症状</text>
+        </view>
+        <text class="symptom-entry-arrow">›</text>
+      </view>
+
+      <!-- 快速标记为安全 -->
+      <view class="skip-row" catchtap="preventBubble">
+        <view class="skip-text-group">
+          <text class="skip-label">直接标记为安全</text>
+          <text class="skip-hint">手动确认安全后，该食材将不再进入排敏观察期</text>
+        </view>
+        <switch checked="{{skipToSafe}}" bindchange="onSkipToggle" color="#8fab8f" />
+      </view>
+
     </view>
 
     <!-- 喜好程度 -->
@@ -167,7 +189,7 @@
     </view>
 
 
-  </view>
+  </scroll-view>
   <!-- /back-body -->
 
   <!-- 底部操作区 -->
@@ -178,6 +200,28 @@
     </view>
     <view wx:if="{{food.isCustom}}" class="delete-food-row" catchtap="onDeleteTap">
       <text class="delete-food-text">删除食物</text>
+    </view>
+  </view>
+
+  <!-- 过敏症状弹窗 -->
+  <view wx:if="{{symptomModalVisible}}" class="symptom-modal-mask" catchtap="onConfirmSymptoms">
+    <view class="symptom-modal" catchtap="preventBubble">
+      <text class="symptom-modal-title">记录过敏症状</text>
+      <view class="symptom-modal-list">
+        <view
+          wx:for="{{symptomOptions}}"
+          wx:key="key"
+          class="symptom-item {{symptomSelected[item.key] ? 'symptom-item-active' : ''}}"
+          catchtap="onSymptomToggle"
+          data-key="{{item.key}}"
+        >
+          <view class="symptom-check {{symptomSelected[item.key] ? 'symptom-check-on' : ''}}">
+            <text wx:if="{{symptomSelected[item.key]}}" class="symptom-check-icon">✓</text>
+          </view>
+          <text class="symptom-label">{{item.label}}</text>
+        </view>
+      </view>
+      <view class="symptom-modal-confirm" catchtap="onConfirmSymptoms">确认</view>
     </view>
   </view>
 

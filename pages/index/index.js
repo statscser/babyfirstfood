@@ -255,9 +255,18 @@ Page({
     customCategoryIndex: 0,
     customCategoryOptions: CATEGORY_LIST,
     availableTags: AVAILABLE_TAGS,
+    overlayStyle:  '',
   },
 
   onLoad() {
+    // Use windowHeight (excludes status bar + nav bar) instead of vh units,
+    // which can include system bars and cause the overlay to be cropped on Android.
+    const sys = wx.getSystemInfoSync()
+    const wh  = sys.windowHeight
+    const top = Math.round(wh * 0.04)
+    const ht  = Math.round(wh * 0.92)
+    this.setData({ overlayStyle: `top:${top}px;height:${ht}px;` })
+
     this._loadAndRender()
     if (!wx.getStorageSync('HAS_READ_NOTICE')) {
       this.setData({ showNoticeBanner: true })
@@ -335,7 +344,9 @@ Page({
         progressList,
         likeLevel,
         likeEmoji:   likeLevel > 0 ? LIKE_EMOJIS[likeLevel - 1] : '',
-        note:        r.note || '',
+        note:        r.note      || '',
+        symptoms:    r.symptoms  || [],
+        skipToSafe:  r.skipToSafe || false,
         categoryKey: CATEGORY_KEYS[food.category] || 'primary',
         dots,
         tags,
@@ -466,13 +477,15 @@ Page({
     const { activeFood } = this.data
     if (!activeFood) return
 
-    const { progressList, likeLevel, note } = e.detail
+    const { progressList, likeLevel, note, symptoms, skipToSafe } = e.detail
     const records = wx.getStorageSync(STORAGE_KEY) || {}
     records[activeFood.id] = {
       progressList,
-      progress:  progressList.filter(p => p.status).length,
+      progress:   progressList.filter(p => p.status).length,
       likeLevel,
       note,
+      symptoms:   symptoms   || [],
+      skipToSafe: skipToSafe || false,
     }
     wx.setStorageSync(STORAGE_KEY, records)
 

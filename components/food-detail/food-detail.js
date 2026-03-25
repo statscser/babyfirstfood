@@ -5,6 +5,31 @@ function todayStr() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
+// Returns YYYY-MM-DD for `daysAgo` days before today
+function dateAgo(daysAgo) {
+  const d = new Date()
+  d.setDate(d.getDate() - daysAgo)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+const SYMPTOM_OPTIONS = [
+  { key: 'rash',     label: '皮肤红疹' },
+  { key: 'vomit',    label: '呕吐'     },
+  { key: 'diarrhea', label: '腹泻'     },
+  { key: 'eyes',     label: '眼睛红肿' },
+  { key: 'other',    label: '其他'     },
+]
+
+const SYMPTOM_LABELS = {
+  rash: '皮肤红疹', vomit: '呕吐', diarrhea: '腹泻', eyes: '眼睛红肿', other: '其他',
+}
+
+function makeSymptomSelected(symptoms) {
+  const map = {}
+  SYMPTOM_OPTIONS.forEach(o => { map[o.key] = symptoms.indexOf(o.key) !== -1 })
+  return map
+}
+
 Component({
   properties: {
     food: {
@@ -12,27 +37,57 @@ Component({
       value: null,
       observer(newFood) {
         if (!newFood) return
+        const pl = [0, 1, 2].map(i => {
+          const p = newFood.progressList && newFood.progressList[i]
+          return p ? Object.assign({}, p) : { status: '', date: '', type: 'safe' }
+        })
+        const symptoms   = newFood.symptoms   || []
+        const skipToSafe = newFood.skipToSafe || false
         this.setData({
           editingRecord: {
-            progressList: [0, 1, 2].map(i => {
-              const p = newFood.progressList && newFood.progressList[i]
-              return p ? Object.assign({}, p) : { status: '', date: '', type: 'safe' }
-            }),
-            likeLevel: newFood.likeLevel || 0,
-            note:      newFood.note      || '',
+            progressList: pl,
+            likeLevel:    newFood.likeLevel || 0,
+            note:         newFood.note      || '',
+            symptoms,
           },
-          expandedSlot: null,
+          symptomSelected:             makeSymptomSelected(symptoms),
+          hasAllergicSlot:             pl.some(p => p.status && p.type === 'allergic'),
+          skipToSafe,
+          savedProgressListBeforeSkip: null,
+          expandedSlot:                null,
         })
       },
     },
   },
 
+  lifetimes: {
+    attached() {
+      // Compute scroll-view height directly from real windowHeight (excludes system bars).
+      // This bypasses the unreliable CSS percentage chain through 3D transform contexts,
+      // which breaks on some Android WebView versions.
+      const sys   = wx.getSystemInfoSync()
+      const wh    = sys.windowHeight
+      // Overlay occupies 92% of windowHeight (matches index.js formula).
+      // back-header ≈ 58px + back-footer ≈ 72px = 130px overhead (conservative).
+      const bodyH = Math.max(Math.round(wh * 0.92) - 130, 200)
+      this.setData({ bodyHeight: bodyH + 'px' })
+    },
+  },
+
   data: {
-    editingRecord:   null,
-    expandedSlot:    null,
-    pendingDateSlot: null,   // index of slot whose date needs fixing (drives highlight animation)
-    typeLabels:      { safe: '安全', caution: '观察', allergic: '过敏' },
-    likeEmojis:      ['🥺', '😕', '😐', '😊', '🥰'],
+    bodyHeight:                  '',
+    editingRecord:               null,
+    expandedSlot:                null,
+    pendingDateSlot:             null,
+    skipToSafe:                  false,
+    savedProgressListBeforeSkip: null,
+    hasAllergicSlot:             false,
+    symptomOptions:              SYMPTOM_OPTIONS,
+    symptomSelected:             {},
+    symptomLabels:               SYMPTOM_LABELS,
+    symptomModalVisible:         false,
+    typeLabels:  { safe: '安全', caution: '观察', allergic: '过敏' },
+    likeEmojis:  ['🥺', '😕', '😐', '😊', '🥰'],
   },
 
   methods: {
@@ -44,16 +99,11 @@ Component({
 
     // ─── recording ────────────────────────────────────────────
 
-    /**
-     * Tap a slot:
-     * - unrecorded → auto-record today + safe
-     * - recorded   → toggle the inline type-selector
-     */
     onRecordTap(e) {
+      if (this.data.skipToSafe) return
       const index = Number(e.currentTarget.dataset.index)
       const pl    = this.data.editingRecord.progressList
 
-      // Sequential guard
       if (index > 0 && !pl[index - 1].status) {
         wx.showToast({ title: `请先记录第 ${index} 次尝试`, icon: 'none', duration: 1800 })
         return
@@ -68,7 +118,6 @@ Component({
           [`editingRecord.progressList[${index}].type`]:   'safe',
           expandedSlot: null,
         })
-        // Warn if today doesn't satisfy the ordering rule; highlight the date field on dismiss
         if (prev && prev.status && today <= prev.date) {
           wx.showModal({
             title: '请检查日期',
@@ -85,6 +134,7 @@ Component({
     },
 
     onTypeExpand(e) {
+      if (this.data.skipToSafe) return
       const index = Number(e.currentTarget.dataset.index)
       const cur   = this.data.expandedSlot
       this.setData({ expandedSlot: cur === index ? null : index })
@@ -97,6 +147,17 @@ Component({
         [`editingRecord.progressList[${index}].type`]: type,
         expandedSlot: null,
       })
+      // Recompute allergic flag from updated list
+      const pl = this.data.editingRecord.progressList
+      const hasAllergicSlot = pl.some((p, i) => p.status && (i === index ? type === 'allergic' : p.type === 'allergic'))
+      const extra = { hasAllergicSlot }
+      if (!hasAllergicSlot && this.data.editingRecord.symptoms.length > 0) {
+        extra['editingRecord.symptoms'] = []
+        extra.symptomSelected = makeSymptomSelected([])
+      }
+      // Auto-open symptom modal when user selects allergic
+      if (type === 'allergic') extra.symptomModalVisible = true
+      this.setData(extra)
     },
 
     onDateChange(e) {
@@ -137,19 +198,76 @@ Component({
         })
         return
       }
-      // Valid date — clear highlight and apply
       this.setData({
         [`editingRecord.progressList[${index}].date`]: newDate,
         pendingDateSlot: null,
       })
     },
 
-    // Tapping the date picker area clears the pending highlight (bubbling already stopped by catchtap)
     onDatePickerTap() {
       if (this.data.pendingDateSlot !== null) {
         this.setData({ pendingDateSlot: null })
       }
     },
+
+    // ─── skip to safe ─────────────────────────────────────────
+
+    onSkipToggle(e) {
+      const on = e.detail.value
+      if (on) {
+        // Save current state for restore, fill all 3 slots with safe over 3 consecutive days
+        const saved = this.data.editingRecord.progressList.map(p => Object.assign({}, p))
+        this.setData({
+          skipToSafe: true,
+          savedProgressListBeforeSkip: saved,
+          'editingRecord.progressList': [
+            { status: 'recorded', date: dateAgo(2), type: 'safe' },
+            { status: 'recorded', date: dateAgo(1), type: 'safe' },
+            { status: 'recorded', date: dateAgo(0), type: 'safe' },
+          ],
+          hasAllergicSlot: false,
+          'editingRecord.symptoms': [],
+          symptomSelected: makeSymptomSelected([]),
+          expandedSlot: null,
+        })
+      } else {
+        const saved = this.data.savedProgressListBeforeSkip
+        const pl    = saved || [0, 1, 2].map(() => ({ status: '', date: '', type: 'safe' }))
+        this.setData({
+          skipToSafe: false,
+          savedProgressListBeforeSkip: null,
+          'editingRecord.progressList': pl,
+          hasAllergicSlot: pl.some(p => p.status && p.type === 'allergic'),
+          expandedSlot: null,
+        })
+      }
+    },
+
+    // ─── symptom modal ────────────────────────────────────────
+
+    onOpenSymptomModal() {
+      this.setData({ symptomModalVisible: true })
+    },
+
+    onConfirmSymptoms() {
+      this.setData({ symptomModalVisible: false })
+    },
+
+    // ─── symptom checklist ────────────────────────────────────
+
+    onSymptomToggle(e) {
+      const key      = e.currentTarget.dataset.key
+      const symptoms = [...(this.data.editingRecord.symptoms || [])]
+      const idx      = symptoms.indexOf(key)
+      if (idx === -1) symptoms.push(key)
+      else symptoms.splice(idx, 1)
+      this.setData({
+        'editingRecord.symptoms': symptoms,
+        symptomSelected: makeSymptomSelected(symptoms),
+      })
+    },
+
+    // ─── like / note ──────────────────────────────────────────
 
     onLikeSelect(e) {
       this.setData({ 'editingRecord.likeLevel': Number(e.currentTarget.dataset.level) })
@@ -159,11 +277,12 @@ Component({
       this.setData({ 'editingRecord.note': e.detail.value })
     },
 
+    // ─── save ─────────────────────────────────────────────────
+
     onSaveTap() {
       const { editingRecord } = this.data
       if (!editingRecord) return
 
-      // Validate all recorded dates before saving
       const pl    = editingRecord.progressList
       const today = todayStr()
       for (let i = 0; i <= 2; i++) {
@@ -192,11 +311,15 @@ Component({
       }
 
       this.triggerEvent('save', {
-        progressList: editingRecord.progressList,
+        progressList: pl,
         likeLevel:    editingRecord.likeLevel,
         note:         editingRecord.note,
+        symptoms:     editingRecord.symptoms || [],
+        skipToSafe:   this.data.skipToSafe,
       })
     },
+
+    // ─── delete / reset ───────────────────────────────────────
 
     onDeleteTap() {
       wx.showModal({
@@ -225,8 +348,14 @@ Component({
               progressList: [0, 1, 2].map(() => ({ status: '', date: '', type: 'safe' })),
               likeLevel: 0,
               note: '',
+              symptoms: [],
             },
-            expandedSlot: null,
+            symptomSelected:             makeSymptomSelected([]),
+            hasAllergicSlot:             false,
+            symptomModalVisible:         false,
+            skipToSafe:                  false,
+            savedProgressListBeforeSkip: null,
+            expandedSlot:                null,
           })
         },
       })

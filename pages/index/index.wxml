@@ -108,7 +108,7 @@
   <view wx:if="{{sortOpen}}" class="sort-mask" bindtap="onSortClose"></view>
 
   <!-- ==================== 遮罩 ==================== -->
-  <view class="mask {{activeId ? 'mask-show' : ''}}" bindtap="onMaskTap"></view>
+  <view class="mask {{activeId ? 'mask-show' : ''}}" bindtap="onMaskTap" catchtouchmove="preventBubble"></view>
 
   <!-- ==================== 详情 Overlay ==================== -->
   <!--
@@ -119,7 +119,9 @@
   <view
     wx:if="{{activeFood}}"
     class="overlay-wrap {{activeId ? 'overlay-active' : ''}}"
+    style="{{overlayStyle}}"
     catchtap="preventBubble"
+    catchtouchmove="preventBubble"
   >
     <view class="overlay-inner">
 
