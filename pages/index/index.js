@@ -363,9 +363,12 @@ Page({
     const mode = this.data.sortMode
     if (mode === 'pinyin') {
       return list.slice().sort((a, b) => {
-        const pa = FOOD_PINYIN[a.id] || a.name
-        const pb = FOOD_PINYIN[b.id] || b.name
-        return pa < pb ? -1 : pa > pb ? 1 : 0
+        const pa = FOOD_PINYIN[a.id]
+        const pb = FOOD_PINYIN[b.id]
+        // Both have handcrafted pinyin → compare directly (cross-platform consistent)
+        if (pa && pb) return pa < pb ? -1 : pa > pb ? 1 : 0
+        // At least one is a custom food without a pinyin entry → locale-aware compare
+        return a.name.localeCompare(b.name, 'zh-CN')
       })
     }
     if (mode === 'progress') {
@@ -380,8 +383,20 @@ Page({
         return b.progress - a.progress
       })
     }
-    // default: original initialFoods order (by id)
-    return list.slice().sort((a, b) => a.id - b.id)
+    // default (分类排序): category order → initial foods first (by id) → custom foods (by name)
+    const catRank = cat => {
+      const i = CATEGORY_LIST.indexOf(cat)
+      return i === -1 ? 99 : i
+    }
+    return list.slice().sort((a, b) => {
+      const ca = catRank(a.category)
+      const cb = catRank(b.category)
+      if (ca !== cb) return ca - cb
+      if (!a.isCustom && !b.isCustom) return a.id - b.id
+      if (!a.isCustom) return -1
+      if (!b.isCustom) return 1
+      return a.name.localeCompare(b.name, 'zh-CN')
+    })
   },
 
   // ─── navigation & search ─────────────────────────────────
