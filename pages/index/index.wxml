@@ -178,6 +178,12 @@
             class="dot {{dot.cls}}"
           ></view>
         </view>
+        <view class="tag-stripe">
+          <view wx:if="{{item.tagObjs.length === 0}}" class="tag-stripe-seg tag-none"></view>
+          <view wx:for="{{item.tagObjs}}" wx:key="cls" wx:for-item="tag" class="tag-stripe-seg {{tag.cls}}">
+            <text class="tag-stripe-text">{{tag.label}}</text>
+          </view>
+        </view>
       </view>
     </view>
   </view>
@@ -215,6 +221,21 @@
       <view class="cf-field">
         <text class="cf-label">英文名（选填）</text>
         <input class="cf-input" placeholder="如：Organic Carrot" value="{{customFoodForm.en}}" bindinput="onCustomFoodEnInput" maxlength="30" />
+      </view>
+
+      <view class="cf-field">
+        <text class="cf-label">特殊标签（选填）</text>
+        <view class="cf-tags-row">
+          <view
+            wx:for="{{availableTags}}"
+            wx:key="key"
+            class="cf-tag {{item.selected ? 'cf-tag-active ' + item.activeCls : ''}}"
+            catchtap="onCustomTagToggle"
+            data-key="{{item.key}}"
+          >
+            <text class="cf-tag-text">{{item.label}}</text>
+          </view>
+        </view>
       </view>
 
       <view class="cf-actions">

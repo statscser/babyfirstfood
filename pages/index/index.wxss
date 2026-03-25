@@ -267,7 +267,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 24rpx 12rpx 16rpx;
+  padding: 24rpx 12rpx 44rpx;
   border-radius: var(--card-radius);
   box-shadow: var(--card-shadow);
   box-sizing: border-box;
@@ -279,17 +279,36 @@
   position: absolute;
   top: 10rpx;
   right: 12rpx;
-  font-size: 28rpx;
+  font-size: 32rpx;
   line-height: 1;
 }
 
 .food-emoji       { font-size: 56rpx; line-height: 1; margin-bottom: 10rpx; }
 .food-emoji.large { font-size: 80rpx; }
 .food-name  { font-size: 30rpx; font-weight: 600; color: var(--text-primary); text-align: center; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 4rpx; }
-.food-en    { font-size: 22rpx; line-height: 30rpx; min-height: 30rpx; color: var(--text-en); text-align: center; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 14rpx; display: block; }
+.food-en    { font-size: 22rpx; line-height: 30rpx; min-height: 30rpx; color: var(--text-en); text-align: center; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 16rpx; display: block; }
+
+/* ── Food attribute tag stripe — absolute bottom overlay ── */
+.tag-stripe {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 30rpx;
+  display: flex;
+  overflow: hidden;
+  border-radius: 0 0 var(--card-radius) var(--card-radius);
+}
+.tag-stripe-seg  { flex: 1; height: 100%; display: flex; align-items: center; justify-content: center; }
+.tag-stripe-text { font-size: 18rpx; line-height: 1; letter-spacing: 0.5rpx; }
+.tag-none        { background: #ede9e5; }
+.tag-allergen    { background: #fff8e0; }
+.tag-allergen .tag-stripe-text { color: #a07820; }
+.tag-iron        { background: #fdecea; }
+.tag-iron .tag-stripe-text     { color: #a03030; }
+.tag-vc          { background: #fff3e0; }
+.tag-vc .tag-stripe-text       { color: #b06020; }
 
 .dots-row { display: flex; flex-direction: row; align-items: center; gap: 10rpx; }
-.dot       { width: 18rpx; height: 18rpx; border-radius: 50%; flex-shrink: 0; }
+.dot       { width: 20rpx; height: 20rpx; border-radius: 50%; flex-shrink: 0; }
 .dot-empty  { background-color: var(--dot-empty); }
 .dot-rose   { background-color: var(--dot-rose);  box-shadow: 0 0 0 2rpx rgba(212,144,140,.25); }
 .dot-amber  { background-color: var(--dot-amber); box-shadow: 0 0 0 2rpx rgba(212,184,120,.25); }
@@ -349,6 +368,18 @@
 .cf-picker { display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.04); border: 1.5rpx solid rgba(0,0,0,0.08); border-radius: 16rpx; padding: 18rpx 20rpx; }
 .cf-picker-text  { font-size: 30rpx; color: var(--text-primary); }
 .cf-picker-arrow { font-size: 22rpx; color: var(--text-secondary); }
+/* ── Modal tag picker ── */
+.cf-tags-row { display: flex; gap: 14rpx; flex-wrap: wrap; margin-top: 6rpx; }
+.cf-tag      { border-radius: 30rpx; border: 1.5rpx solid #e0d8d4; padding: 10rpx 28rpx; }
+.cf-tag-text { font-size: 26rpx; color: #a09890; }
+.cf-tag-active { border-color: transparent; }
+.cf-tag-allergen            { background: #fff8e0; }
+.cf-tag-allergen .cf-tag-text { color: #a07820; font-weight: 600; }
+.cf-tag-iron                { background: #fdecea; }
+.cf-tag-iron .cf-tag-text   { color: #a03030; font-weight: 600; }
+.cf-tag-vc                  { background: #fff3e0; }
+.cf-tag-vc .cf-tag-text     { color: #b06020; font-weight: 600; }
+
 .cf-actions { display: flex; gap: 16rpx; margin-top: 4rpx; }
 .cf-btn     { flex: 1; padding: 22rpx 0; border-radius: 20rpx; font-size: 30rpx; font-weight: 600; text-align: center; }
 .cf-cancel  { background: rgba(0,0,0,0.05); color: var(--text-secondary); }

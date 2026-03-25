@@ -6,6 +6,56 @@ const CATEGORY_LIST    = ['蔬菜','水果','谷物','肉类','蛋奶','豆类',
 const CAT_DEFAULT_EMOJI = { '蔬菜':'🥦','水果':'🍓','谷物':'🌾','肉类':'🥩','蛋奶':'🥛','豆类':'🫘','坚果':'🥜','香料':'🌿' }
 const LIKE_EMOJIS = ['🥺', '😕', '😐', '😊', '🥰']
 
+// ─── Food attribute tags ───────────────────────────────────
+const FOOD_TAGS = {
+  // high-allergen (常见过敏原)
+  51: ['high-allergen'],          // 面包 (wheat)
+  52: ['high-allergen'],          // 意大利面 (wheat)
+  58: ['high-allergen'],          // 小麦
+  67: ['high-allergen'],          // 三文鱼
+  68: ['high-allergen'],          // 鳕鱼
+  69: ['high-allergen'],          // 龙利鱼
+  70: ['high-allergen'],          // 虾
+  71: ['high-allergen'],          // 银鱼
+  72: ['high-allergen'],          // 贝类
+  73: ['high-allergen'],          // 鸡蛋
+  74: ['high-allergen'],          // 牛奶
+  87: ['high-allergen', 'high-iron'], // 大豆
+  89: ['high-allergen'],          // 花生
+  90: ['high-allergen'],          // 核桃
+  91: ['high-allergen'],          // 杏仁
+  92: ['high-allergen'],          // 腰果
+  93: ['high-allergen'],          // 树坚果
+  94: ['high-allergen'],          // 芝麻
+  // high-iron (高铁)
+  9:  ['high-iron'],              // 菠菜
+  21: ['high-iron', 'high-vc'],   // 羽衣甘蓝
+  60: ['high-iron'],              // 牛肉
+  62: ['high-iron'],              // 猪肝
+  64: ['high-iron'],              // 羊肉
+  84: ['high-iron'],              // 黑豆
+  // high-vc (高维C)
+  3:  ['high-vc'],                // 西蓝花
+  5:  ['high-vc'],                // 花菜
+  13: ['high-vc'],                // 甜椒
+  14: ['high-vc'],                // 西红柿
+  26: ['high-vc'],                // 草莓
+  35: ['high-vc'],                // 猕猴桃
+  37: ['high-vc'],                // 橙子
+  38: ['high-vc'],                // 橘子
+  39: ['high-vc'],                // 柠檬
+}
+const TAG_INFO = {
+  'high-allergen': { label: '易过敏', cls: 'tag-allergen' },
+  'high-iron':     { label: '高铁',   cls: 'tag-iron'     },
+  'high-vc':       { label: '高VC',  cls: 'tag-vc'       },
+}
+const AVAILABLE_TAGS = [
+  { key: 'high-allergen', label: '易过敏', activeCls: 'cf-tag-allergen' },
+  { key: 'high-iron',     label: '高铁',   activeCls: 'cf-tag-iron'     },
+  { key: 'high-vc',       label: '高VC',  activeCls: 'cf-tag-vc'       },
+]
+
 // 手动标注拼音（无声调、无空格拼接），确保跨平台排序一致
 // 排序依据：逐字母比较，与标准字典序完全一致
 const FOOD_PINYIN = {
@@ -201,9 +251,10 @@ Page({
     showNoticeBanner: false,
     // custom food modal
     customFoodModal: false,
-    customFoodForm: { name: '', emoji: '🥦', en: '' },
+    customFoodForm: { name: '', emoji: '🥦', en: '', tags: [] },
     customCategoryIndex: 0,
     customCategoryOptions: CATEGORY_LIST,
+    availableTags: AVAILABLE_TAGS,
   },
 
   onLoad() {
@@ -277,6 +328,8 @@ Page({
         cls: p.status ? (resultToCls[p.type] || 'dot-empty') : 'dot-empty',
       }))
       const likeLevel = r.likeLevel || 0
+      const tags    = FOOD_TAGS[food.id] || food.tags || []
+      const tagObjs = tags.map(t => TAG_INFO[t]).filter(Boolean)
       return Object.assign({}, food, {
         progress,
         progressList,
@@ -285,6 +338,8 @@ Page({
         note:        r.note || '',
         categoryKey: CATEGORY_KEYS[food.category] || 'primary',
         dots,
+        tags,
+        tagObjs,
       })
     })
   },
@@ -435,8 +490,9 @@ Page({
     const prefill = (e && e.currentTarget && e.currentTarget.dataset.prefill) || ''
     this.setData({
       customFoodModal: true,
-      customFoodForm: { name: prefill, emoji: CAT_DEFAULT_EMOJI[CATEGORY_LIST[0]], en: '' },
+      customFoodForm: { name: prefill, emoji: CAT_DEFAULT_EMOJI[CATEGORY_LIST[0]], en: '', tags: [] },
       customCategoryIndex: 0,
+      availableTags: AVAILABLE_TAGS.map(t => Object.assign({}, t, { selected: false })),
     })
   },
 
@@ -450,6 +506,16 @@ Page({
 
   onCustomFoodEnInput(e) {
     this.setData({ 'customFoodForm.en': e.detail.value })
+  },
+
+  onCustomTagToggle(e) {
+    const key  = e.currentTarget.dataset.key
+    const tags = [...(this.data.customFoodForm.tags || [])]
+    const idx  = tags.indexOf(key)
+    if (idx === -1) tags.push(key)
+    else tags.splice(idx, 1)
+    const availableTags = AVAILABLE_TAGS.map(t => Object.assign({}, t, { selected: tags.indexOf(t.key) !== -1 }))
+    this.setData({ 'customFoodForm.tags': tags, availableTags })
   },
 
   onCustomCategoryChange(e) {
@@ -478,7 +544,8 @@ Page({
     const category = customCategoryOptions[customCategoryIndex]
     const emoji    = customFoodForm.emoji.trim() || CAT_DEFAULT_EMOJI[category] || '🍽'
     const en       = customFoodForm.en.trim()
-    const newFood  = { id: Date.now(), name, emoji, en, category, isCustom: true }
+    const tags     = customFoodForm.tags || []
+    const newFood  = { id: Date.now(), name, emoji, en, category, tags, isCustom: true }
     const customs  = wx.getStorageSync(CUSTOM_FOODS_KEY) || []
     wx.setStorageSync(CUSTOM_FOODS_KEY, [...customs, newFood])
     this.setData({ customFoodModal: false })
