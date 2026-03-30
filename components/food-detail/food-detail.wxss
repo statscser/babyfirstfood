@@ -2,19 +2,18 @@
    food-detail.wxss — 背面详情 + 记录交互样式
    ======================================================= */
 
-/* Host element must fill overlay-back; without this, height: 100% on fd-root resolves to 0 */
 :host {
   display: block;
   width: 100%;
-  height: 100%;
+  /* height intentionally NOT set — fd-root uses JS inline style to bypass the unreliable
+     height:100% chain through preserve-3d/rotateY transform contexts on Android WebView */
 }
 
-/* 组件根节点撑满父容器（overlay-back） */
 .fd-root {
   position: relative;
-  overflow: hidden;    /* prevent footer from escaping overlay-face bounds */
+  overflow: hidden;
   width: 100%;
-  height: 100%;
+  /* height set via inline style (rootHeight) computed in attached() from windowHeight */
   display: flex;
   flex-direction: column;
 }

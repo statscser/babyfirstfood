@@ -1,5 +1,5 @@
 <!-- food-detail.wxml -->
-<view wx:if="{{food && editingRecord}}" class="fd-root">
+<view wx:if="{{food && editingRecord}}" class="fd-root" style="height:{{rootHeight}};">
 
   <!-- ── 标题区 ── -->
   <view class="back-header card-bg-{{food.categoryKey}}">
@@ -12,7 +12,7 @@
   </view>
 
   <!-- ── 主体（可滚动） ── -->
-  <scroll-view class="back-body" scroll-y enhanced show-scrollbar="{{false}}" style="height:{{bodyHeight}};" catchtouchmove="preventBubble">
+  <scroll-view class="back-body" scroll-y enhanced show-scrollbar="{{false}}" catchtouchmove="preventBubble">
 
     <!-- 喂食记录 -->
     <view class="back-section">

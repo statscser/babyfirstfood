@@ -62,20 +62,17 @@ Component({
 
   lifetimes: {
     attached() {
-      // Compute scroll-view height directly from real windowHeight (excludes system bars).
-      // This bypasses the unreliable CSS percentage chain through 3D transform contexts,
-      // which breaks on some Android WebView versions.
-      const sys   = wx.getSystemInfoSync()
-      const wh    = sys.windowHeight
-      // Overlay occupies 92% of windowHeight (matches index.js formula).
-      // back-header ≈ 58px + back-footer ≈ 72px = 130px overhead (conservative).
-      const bodyH = Math.max(Math.round(wh * 0.92) - 130, 200)
-      this.setData({ bodyHeight: bodyH + 'px' })
+      // height:100% chains through a preserve-3d/rotateY transform context, which breaks
+      // on Android WebView — fd-root ends up with no height, so footer overflows the overlay.
+      // Fix: compute fd-root height directly in JS and apply via inline style, bypassing CSS.
+      const sys      = wx.getSystemInfoSync()
+      const overlayH = Math.round(sys.windowHeight * 0.92) // matches index.js overlayStyle formula
+      this.setData({ rootHeight: overlayH + 'px' })
     },
   },
 
   data: {
-    bodyHeight:                  '',
+    rootHeight:                  '',
     editingRecord:               null,
     expandedSlot:                null,
     pendingDateSlot:             null,
