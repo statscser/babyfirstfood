@@ -1,5 +1,13 @@
 // components/share-poster/share-poster.js
 
+import { INITIAL_FOODS } from '../../data/initialFoods'
+
+const CAT_KEY_MAP = {
+  '蔬菜': 'vegetables', '水果': 'fruits',  '谷物': 'grains',
+  '肉类': 'meat',       '蛋奶': 'dairy',   '豆类': 'legumes',
+  '坚果': 'nuts',       '香料': 'spices',
+}
+
 const THEME_COLORS = {
   primary:    '#c4a8b0',
   vegetables: '#8fab8f',
@@ -44,10 +52,25 @@ Component({
     },
   },
 
+  lifetimes: {
+    attached() {
+      const sys     = wx.getSystemInfoSync()
+      const rpxToPx = sys.windowWidth / 750
+      // Panel max-height is 92vh; subtract name-row (~106rpx) + actions (~140rpx)
+      const panelH  = Math.round(sys.windowHeight * 0.92)
+      const bodyH   = Math.max(panelH - Math.round(246 * rpxToPx), 100)
+      let isDev = false
+      try { isDev = wx.getAccountInfoSync().miniProgram.envVersion === 'develop' } catch (e) {}
+      this.setData({ bodyHeight: bodyH + 'px', isDev })
+    },
+  },
+
   data: {
     babyName:   '',
     posterPath: '',
     loading:    false,
+    bodyHeight: '',
+    isDev:      false,
   },
 
   methods: {
@@ -86,6 +109,26 @@ Component({
       })
     },
 
+    // ── Dev-only: fill all 100 foods as tried and regenerate ──────────
+    onTestFill() {
+      const testFoods = INITIAL_FOODS.map(f => ({
+        id:          f.id,
+        name:        f.name,
+        emoji:       f.emoji,
+        category:    f.category,
+        categoryKey: CAT_KEY_MAP[f.category] || 'primary',
+        progress:    3,
+        isCustom:    false,
+      }))
+      this.setData({ posterPath: '', loading: true })
+      this._generatePoster(testFoods, testFoods.length, testFoods.length)
+        .then(path => this.setData({ posterPath: path, loading: false }))
+        .catch(() => {
+          this.setData({ loading: false })
+          wx.showToast({ title: '生成失败', icon: 'none' })
+        })
+    },
+
     _generate() {
       if (!this.data.allFoods || !this.data.allFoods.length) return
       this.setData({ loading: true })
@@ -97,12 +140,22 @@ Component({
         })
     },
 
-    _generatePoster() {
+    _generatePoster(allFoodsOverride, triedCountOverride, totalCountOverride) {
       return new Promise((resolve, reject) => {
-        const { triedCount, totalCount, babyName, allFoods } = this.data
+        const allFoods   = allFoodsOverride   ?? this.data.allFoods
+        const triedCount = triedCountOverride ?? this.data.triedCount
+        const totalCount = totalCountOverride ?? this.data.totalCount
+        const { babyName } = this.data
         const triedFoods = allFoods
           .filter(f => f.progress > 0)
-          .sort((a, b) => a.id - b.id)
+          .sort((a, b) => {
+            const da = a.progressList && a.progressList[0] && a.progressList[0].date || ''
+            const db = b.progressList && b.progressList[0] && b.progressList[0].date || ''
+            if (da && db) return da < db ? -1 : da > db ? 1 : 0
+            if (da) return -1   // a has date, b doesn't → a first
+            if (db) return 1    // b has date, a doesn't → b first
+            return a.id - b.id  // fallback (e.g. test data with no dates)
+          })
           .map(f => ({ id: f.id, name: f.name, emoji: f.emoji, categoryKey: f.categoryKey }))
 
         this.createSelectorQuery()

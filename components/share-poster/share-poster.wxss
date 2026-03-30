@@ -71,6 +71,21 @@
   box-sizing: border-box;
 }
 
+/* ── Dev test bar (development envVersion only) ── */
+.sp-dev-bar {
+  padding: 12rpx 0 4rpx;
+  display: flex;
+  justify-content: center;
+}
+.sp-dev-btn {
+  font-size: 22rpx;
+  color: #fff;
+  background: #888;
+  border-radius: 12rpx;
+  padding: 10rpx 24rpx;
+  letter-spacing: 1rpx;
+}
+
 /* Loading state */
 .sp-loading {
   display: flex;
